@@ -11,288 +11,337 @@
 *{box-sizing:border-box}
 
 body{
-  margin:0;
-  padding:16px;
-  background:#101010;
-  color:white;
-  font-family:Arial,sans-serif;
-  text-align:center;
+ margin:0;
+ padding:15px;
+ background:#101010;
+ color:white;
+ font-family:Arial,sans-serif;
+ text-align:center;
 }
 
-header{padding:10px 0 15px}
-
-h1{
-  color:#fffc00;
-  font-size:32px;
-  margin:8px;
-}
-
-.subtitle{
-  color:#aaa;
-  font-size:14px;
-}
+h1{color:#fffc00;font-size:30px}
+.subtitle{color:#aaa}
 
 .camera-box{
-  position:relative;
-  width:100%;
-  max-width:500px;
-  margin:auto;
-  overflow:hidden;
-  border-radius:24px;
-  background:#222;
-  border:2px solid #333;
-  min-height:250px;
+ position:relative;
+ max-width:500px;
+ margin:auto;
+ overflow:hidden;
+ border-radius:22px;
+ background:#222;
+ border:2px solid #444;
 }
 
 video{
-  display:block;
-  width:100%;
-  max-height:60vh;
-  min-height:250px;
-  object-fit:cover;
-  filter:none;
+ display:block;
+ width:100%;
+ height:auto;
+ max-height:60vh;
+ object-fit:contain;
+ filter:none;
 }
 
-.camera-label{
-  position:absolute;
-  top:12px;
-  right:12px;
-  background:#0009;
-  padding:7px 12px;
-  border-radius:20px;
-  font-size:12px;
+#overlay{
+ position:absolute;
+ top:0;
+ left:0;
+ width:100%;
+ height:100%;
+ pointer-events:none;
 }
 
 #status{
-  color:#ddd;
-  font-size:14px;
-  min-height:22px;
-  margin:15px 0;
+ color:#ddd;
+ padding:12px;
+ font-size:14px;
+ min-height:40px;
 }
 
 button{
-  border:0;
-  border-radius:25px;
-  padding:12px 17px;
-  margin:5px;
-  font-size:15px;
-  font-weight:bold;
-  cursor:pointer;
+ border:0;
+ border-radius:25px;
+ padding:12px 16px;
+ margin:5px;
+ font-size:15px;
+ font-weight:bold;
+ cursor:pointer;
 }
 
-button:active{transform:scale(.96)}
-
-.main-btn{
-  background:#fffc00;
-  color:#111;
+.main{
+ background:#fffc00;
+ color:#111;
 }
 
 .secondary{
-  background:#292929;
-  color:white;
-  border:1px solid #444;
+ background:#292929;
+ color:white;
+ border:1px solid #444;
 }
 
 h3{
-  color:#fffc00;
-  margin-top:25px;
+ color:#fffc00;
+ margin-top:25px;
 }
 
-.filters{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:5px;
+.filters,.effects{
+ display:flex;
+ flex-wrap:wrap;
+ justify-content:center;
+ gap:5px;
 }
 
-.filter-btn{
-  background:#292929;
-  color:white;
-  border:1px solid #444;
+.filter-btn,.effect-btn{
+ background:#292929;
+ color:white;
+ border:1px solid #444;
 }
 
-.filter-btn.active{
-  background:#fffc00;
-  color:#111;
-  border-color:#fffc00;
+.active{
+ background:#fffc00!important;
+ color:#111!important;
 }
 
 #capture{
-  width:75px;
-  height:75px;
-  border-radius:50%;
-  background:#fffc00;
-  color:#111;
-  font-size:30px;
-  border:5px solid white;
-  padding:0;
-  margin:20px 10px;
-}
-
-.actions{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.preview-box{
-  margin:20px auto;
-  max-width:350px;
+ width:75px;
+ height:75px;
+ border-radius:50%;
+ background:#fffc00;
+ color:#111;
+ font-size:30px;
+ border:5px solid white;
+ padding:0;
+ margin:20px;
 }
 
 #preview{
-  width:100%;
-  border-radius:18px;
-  display:none;
-  border:2px solid #fffc00;
+ display:none;
+ width:100%;
+ max-width:350px;
+ margin:20px auto;
+ border-radius:18px;
+ border:2px solid #fffc00;
 }
 
 #download{
-  display:none;
-  text-decoration:none;
-  background:#fffc00;
-  color:#111;
-  padding:12px 20px;
-  border-radius:25px;
-  font-weight:bold;
-  margin:12px auto;
+ display:none;
+ background:#fffc00;
+ color:#111;
+ padding:12px 22px;
+ border-radius:25px;
+ text-decoration:none;
+ font-weight:bold;
 }
 
 footer{
-  color:#777;
-  font-size:12px;
-  margin:30px 0 10px;
+ color:#777;
+ font-size:12px;
+ margin-top:30px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>👻 Bashar Snap</h1>
-  <div class="subtitle">لحظاتك الجميلة تبدأ هنا ❤️</div>
-</header>
+<h1>👻 Bashar Snap</h1>
+<p class="subtitle">كاميرتك الخاصة ❤️</p>
 
 <div class="camera-box">
-  <video id="camera" autoplay playsinline muted></video>
-  <div class="camera-label">📸 BASHAR SNAP</div>
+ <video id="camera" autoplay playsinline muted></video>
+ <canvas id="overlay"></canvas>
 </div>
 
-<p id="status">اضغط تشغيل الكاميرا للبدء ❤️</p>
+<p id="status">مرحباً بك في Bashar Snap 📸</p>
 
-<div class="actions">
-  <button class="main-btn" id="start">📷 تشغيل الكاميرا</button>
-  <button class="secondary" id="switch">🔄 تبديل الكاميرا</button>
-</div>
+<button class="main" id="start">
+ 📷 تشغيل الكاميرا
+</button>
 
-<h3>✨ اختر الفلتر المفضل</h3>
+<button class="secondary" id="switch">
+ 🔄 تبديل الكاميرا
+</button>
+
+<h3>✨ الفلاتر</h3>
 
 <div class="filters">
 
-  <button class="filter-btn active" data-filter="none">
-    طبيعي
-  </button>
+ <button class="filter-btn active"
+ data-filter="none">طبيعي</button>
 
-  <button class="filter-btn" data-filter="brightness(1.15) saturate(1.2) contrast(1.05)">
-    ✨ ناعم
-  </button>
+ <button class="filter-btn"
+ data-filter="brightness(1.15) saturate(1.2)">
+ ناعم ✨</button>
 
-  <button class="filter-btn" data-filter="sepia(.3) brightness(1.1) saturate(1.3)">
-    🌅 ذهبي
-  </button>
+ <button class="filter-btn"
+ data-filter="sepia(.3) brightness(1.1) saturate(1.3)">
+ ذهبي 🌅</button>
 
-  <button class="filter-btn" data-filter="brightness(1.1) saturate(1.4) hue-rotate(330deg)">
-    🌸 وردي
-  </button>
+ <button class="filter-btn"
+ data-filter="brightness(1.1) saturate(1.4) hue-rotate(330deg)">
+ وردي 🌸</button>
 
-  <button class="filter-btn" data-filter="contrast(1.15) saturate(1.5)">
-    💖 حيوي
-  </button>
+ <button class="filter-btn"
+ data-filter="contrast(1.15) saturate(1.5)">
+ حيوي 💖</button>
 
-  <button class="filter-btn" data-filter="brightness(1.15) contrast(.9) saturate(.8)">
-    ☁️ حالم
-  </button>
+ <button class="filter-btn"
+ data-filter="grayscale(1)">
+ أبيض وأسود</button>
 
-  <button class="filter-btn" data-filter="sepia(.5) contrast(1.1)">
-    🎞️ كلاسيكي
-  </button>
+</div>
 
-  <button class="filter-btn" data-filter="grayscale(1)">
-    أبيض وأسود
-  </button>
+<h3>👑 تأثيرات الوجه الذكية</h3>
+
+<div class="effects">
+
+ <button class="effect-btn active"
+ data-effect="none">بدون تأثير</button>
+
+ <button class="effect-btn"
+ data-effect="glasses">😎 نظارات</button>
+
+ <button class="effect-btn"
+ data-effect="crown">👑 تاج</button>
+
+ <button class="effect-btn"
+ data-effect="hearts">💕 قلوب</button>
 
 </div>
 
 <div>
-  <button id="capture">📸</button>
+ <button id="capture">📸</button>
 </div>
 
-<div class="preview-box">
-  <img id="preview" alt="الصورة الملتقطة">
-  <a id="download" download="Bashar-Snap.png">
-    ⬇️ حفظ الصورة
-  </a>
-</div>
+<img id="preview" alt="الصورة الملتقطة">
+
+<br>
+
+<a id="download" download="Bashar-Snap.png">
+ ⬇️ حفظ الصورة
+</a>
+
+<p id="faceStatus">تقنية التعرف على الوجه قيد التحميل...</p>
 
 <footer>
-  Made with ❤️ by Bashar
-  <br>
-  © 2026 Bashar Snap
+ Made with ❤️ by Bashar
+ <br>
+ © 2026 Bashar Snap
 </footer>
 
-<canvas id="canvas" hidden></canvas>
+<canvas id="photo" hidden></canvas>
 
-<script>
-const video = document.getElementById("camera");
-const statusText = document.getElementById("status");
-const canvas = document.getElementById("canvas");
-const preview = document.getElementById("preview");
-const download = document.getElementById("download");
+<script type="module">
 
-let stream = null;
-let facing = "user";
-let currentFilter = "none";
+import {
+ FilesetResolver,
+ FaceLandmarker
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
+
+const video=document.getElementById("camera");
+const overlay=document.getElementById("overlay");
+const ctx=overlay.getContext("2d");
+const status=document.getElementById("status");
+const faceStatus=document.getElementById("faceStatus");
+
+const photo=document.getElementById("photo");
+const preview=document.getElementById("preview");
+const download=document.getElementById("download");
+
+let stream=null;
+let facing="user";
+let currentFilter="none";
+let currentEffect="none";
+let faceLandmarker=null;
+let running=false;
+let lastTime=-1;
+let lastImageURL=null;
+
+async function loadFaceModel(){
+
+ try{
+
+  faceStatus.textContent="جارٍ تحميل تقنية الوجه الذكية...";
+
+  const vision=await FilesetResolver.forVisionTasks(
+   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+  );
+
+  faceLandmarker=await FaceLandmarker.createFromOptions(
+   vision,
+   {
+    baseOptions:{
+     modelAssetPath:
+     "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+    },
+    runningMode:"VIDEO",
+    numFaces:1
+   }
+  );
+
+  faceStatus.textContent="تم تجهيز التعرف على الوجه ❤️";
+
+  if(stream) startTracking();
+
+ }catch(error){
+
+  faceStatus.textContent=
+  "تعذر تحميل تقنية الوجه. تحقق من اتصال الإنترنت.";
+
+  console.error(error);
+
+ }
+
+}
 
 async function startCamera(){
 
-  try{
+ try{
 
-    if(!navigator.mediaDevices ||
-       !navigator.mediaDevices.getUserMedia){
-      throw new Error("unsupported");
-    }
-
-    if(stream){
-      stream.getTracks().forEach(track => track.stop());
-    }
-
-    statusText.textContent = "جارٍ تشغيل الكاميرا...";
-
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio:false,
-      video:{
-        facingMode:{ideal:facing},
-        width:{ideal:1280},
-        height:{ideal:720}
-      }
-    });
-
-    video.srcObject = stream;
-    await video.play();
-
-    video.style.transform =
-      facing === "user" ? "scaleX(-1)" : "none";
-
-    statusText.textContent =
-      "الكاميرا تعمل بنجاح ❤️";
-
-  }catch(error){
-
-    statusText.textContent =
-      "تعذر تشغيل الكاميرا. تأكد من السماح باستخدامها وفتح الموقع عبر اتصال آمن.";
-
+  if(!navigator.mediaDevices?.getUserMedia){
+   throw new Error("Camera unavailable");
   }
+
+  if(stream){
+   stream.getTracks().forEach(track=>track.stop());
+  }
+
+  running=false;
+
+  status.textContent="جارٍ تشغيل الكاميرا...";
+
+  stream=await navigator.mediaDevices.getUserMedia({
+   audio:false,
+   video:{
+    facingMode:{ideal:facing},
+    width:{ideal:1280},
+    height:{ideal:720}
+   }
+  });
+
+  video.srcObject=stream;
+  await video.play();
+
+  video.style.transform=
+   facing==="user"?"scaleX(-1)":"none";
+
+  overlay.style.transform=
+   facing==="user"?"scaleX(-1)":"none";
+
+  overlay.width=video.videoWidth;
+  overlay.height=video.videoHeight;
+
+  status.textContent="الكاميرا تعمل بنجاح ❤️";
+
+  if(faceLandmarker){
+   startTracking();
+  }
+
+ }catch(error){
+
+  status.textContent=
+   "تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا.";
+
+ }
+
 }
 
 document.getElementById("start")
@@ -301,98 +350,285 @@ document.getElementById("start")
 document.getElementById("switch")
 .addEventListener("click",()=>{
 
-  facing = facing === "user"
-    ? "environment"
-    : "user";
-
-  startCamera();
+ facing=facing==="user"?"environment":"user";
+ startCamera();
 
 });
 
 document.querySelectorAll(".filter-btn")
 .forEach(button=>{
 
-  button.addEventListener("click",()=>{
+ button.addEventListener("click",()=>{
 
-    currentFilter = button.dataset.filter;
+  currentFilter=button.dataset.filter;
+  video.style.filter=currentFilter;
 
-    video.style.filter = currentFilter;
+  document.querySelectorAll(".filter-btn")
+  .forEach(b=>b.classList.remove("active"));
 
-    document.querySelectorAll(".filter-btn")
-    .forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
 
-    button.classList.add("active");
+ });
+
+});
+
+document.querySelectorAll(".effect-btn")
+.forEach(button=>{
+
+ button.addEventListener("click",()=>{
+
+  currentEffect=button.dataset.effect;
+
+  document.querySelectorAll(".effect-btn")
+  .forEach(b=>b.classList.remove("active"));
+
+  button.classList.add("active");
+
+ });
+
+});
+
+function startTracking(){
+
+ if(running)return;
+
+ running=true;
+ renderLoop();
+
+}
+
+function renderLoop(){
+
+ if(!running || !faceLandmarker || !stream)return;
+
+ if(video.readyState>=2 && video.currentTime!==lastTime){
+
+  lastTime=video.currentTime;
+
+  try{
+
+   const result=faceLandmarker.detectForVideo(
+    video,
+    performance.now()
+   );
+
+   ctx.clearRect(0,0,overlay.width,overlay.height);
+
+   if(result.faceLandmarks.length>0){
+
+    faceStatus.textContent="تم التعرف على وجهك ❤️";
+
+    if(currentEffect!=="none"){
+     drawEffect(result.faceLandmarks[0]);
+    }
+
+   }else{
+
+    faceStatus.textContent="ضع وجهك أمام الكاميرا 📷";
+
+   }
+
+  }catch(error){
+
+   console.error(error);
+
+  }
+
+ }
+
+ requestAnimationFrame(renderLoop);
+
+}
+
+function point(landmarks,index){
+
+ return {
+  x:landmarks[index].x*overlay.width,
+  y:landmarks[index].y*overlay.height
+ };
+
+}
+
+function drawEffect(landmarks){
+
+ const width=overlay.width;
+ const height=overlay.height;
+
+ ctx.save();
+ ctx.textAlign="center";
+ ctx.textBaseline="middle";
+
+ const leftEye=point(landmarks,468);
+ const rightEye=point(landmarks,473);
+ const forehead=point(landmarks,10);
+
+ const faceLeft=point(landmarks,127);
+ const faceRight=point(landmarks,356);
+
+ const faceWidth=Math.abs(faceRight.x-faceLeft.x);
+
+ if(currentEffect==="glasses"){
+
+  const eyeDistance=Math.hypot(
+   rightEye.x-leftEye.x,
+   rightEye.y-leftEye.y
+  );
+
+  const size=eyeDistance*0.65;
+
+  ctx.fillStyle="#111";
+  ctx.strokeStyle="#fffc00";
+  ctx.lineWidth=Math.max(3,width*0.004);
+
+  [leftEye,rightEye].forEach(eye=>{
+
+   ctx.beginPath();
+   ctx.ellipse(
+    eye.x,eye.y,
+    size/2,size*0.34,
+    0,0,Math.PI*2
+   );
+
+   ctx.fill();
+   ctx.stroke();
 
   });
 
-});
+  ctx.beginPath();
+  ctx.moveTo(leftEye.x+size/2,leftEye.y);
+  ctx.lineTo(rightEye.x-size/2,rightEye.y);
+  ctx.stroke();
+
+ }
+
+ if(currentEffect==="crown"){
+
+  ctx.font=`${faceWidth*0.85}px Arial`;
+
+  ctx.fillText(
+   "👑",
+   forehead.x,
+   forehead.y-faceWidth*0.32
+  );
+
+ }
+
+ if(currentEffect==="hearts"){
+
+  const cheekLeft=point(landmarks,234);
+  const cheekRight=point(landmarks,454);
+
+  ctx.font=`${faceWidth*0.25}px Arial`;
+
+  ctx.fillText(
+   "💕",
+   cheekLeft.x,
+   cheekLeft.y
+  );
+
+  ctx.fillText(
+   "💕",
+   cheekRight.x,
+   cheekRight.y
+  );
+
+  ctx.font=`${faceWidth*0.2}px Arial`;
+
+  ctx.fillText(
+   "💗",
+   forehead.x,
+   forehead.y-faceWidth*0.3
+  );
+
+ }
+
+ ctx.restore();
+
+}
+
+function takePhoto(){
+
+ if(!stream || !video.videoWidth){
+
+  status.textContent="شغّل الكاميرا أولاً 📷";
+  return;
+
+ }
+
+ photo.width=video.videoWidth;
+ photo.height=video.videoHeight;
+
+ const pctx=photo.getContext("2d");
+
+ pctx.save();
+
+ if(facing==="user"){
+  pctx.translate(photo.width,0);
+  pctx.scale(-1,1);
+ }
+
+ pctx.filter=currentFilter;
+
+ pctx.drawImage(
+  video,
+  0,0,
+  photo.width,
+  photo.height
+ );
+
+ pctx.filter="none";
+
+ pctx.drawImage(
+  overlay,
+  0,0,
+  photo.width,
+  photo.height
+ );
+
+ pctx.restore();
+
+ photo.toBlob(blob=>{
+
+  if(!blob)return;
+
+  if(lastImageURL){
+   URL.revokeObjectURL(lastImageURL);
+  }
+
+  lastImageURL=URL.createObjectURL(blob);
+
+  preview.src=lastImageURL;
+  preview.style.display="block";
+
+  download.href=lastImageURL;
+  download.style.display="inline-block";
+
+  status.textContent="تم التقاط الصورة بنجاح ❤️";
+
+ },"image/png");
+
+}
 
 document.getElementById("capture")
 .addEventListener("click",takePhoto);
 
-function takePhoto(){
-
-  if(!stream || !video.videoWidth){
-
-    statusText.textContent =
-      "شغّل الكاميرا أولاً 📷";
-
-    return;
-  }
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  const ctx = canvas.getContext("2d");
-
-  ctx.filter = currentFilter;
-
-  if(facing === "user"){
-
-    ctx.translate(canvas.width,0);
-    ctx.scale(-1,1);
-
-  }
-
-  ctx.drawImage(
-    video,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  canvas.toBlob(blob=>{
-
-    if(!blob){
-      statusText.textContent =
-        "تعذر حفظ الصورة. حاول مرة أخرى.";
-      return;
-    }
-
-    const imageURL = URL.createObjectURL(blob);
-
-    preview.src = imageURL;
-    preview.style.display = "block";
-
-    download.href = imageURL;
-    download.style.display = "inline-block";
-
-    statusText.textContent =
-      "تم التقاط صورتك بنجاح ❤️";
-
-  },"image/png");
-
-}
+loadFaceModel();
 
 window.addEventListener("pagehide",()=>{
 
-  if(stream){
-    stream.getTracks().forEach(track=>track.stop());
-  }
+ running=false;
+
+ if(stream){
+  stream.getTracks().forEach(track=>track.stop());
+ }
+
+ if(lastImageURL){
+  URL.revokeObjectURL(lastImageURL);
+ }
 
 });
 
 </script>
+
 </body>
 </html>
