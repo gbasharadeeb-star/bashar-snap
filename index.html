@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -5,53 +6,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bashar Snap</title>
 <style>
-body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
-h1{color:#fffc00}
-video,canvas{width:100%;max-height:65vh;object-fit:cover}
-button{padding:13px;margin:7px;border:0;border-radius:22px;font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center;padding:15px}
+h1{color:#fffc00;font-size:30px}
+video{width:100%;max-height:60vh;object-fit:cover;border-radius:18px;background:#222}
+button{padding:13px;margin:6px;border:0;border-radius:22px;font-size:16px;cursor:pointer}
 .filters{background:#292929;color:white}
 #capture{background:#fffc00;font-weight:bold}
+#status{color:#ddd;padding:12px}
 </style>
 </head>
 <body>
 <h1>👻 Bashar Snap</h1>
-<video id="camera" autoplay playsinline></video>
+<p>كاميرتك الخاصة 📸</p>
+<video id="camera" autoplay playsinline muted></video>
+<p id="status">اضغط تشغيل الكاميرا للبدء</p>
+<button onclick="startCamera()">تشغيل الكاميرا 📷</button>
 <div>
-<button class="filters" onclick="filter('none')">طبيعي</button>
-<button class="filters" onclick="filter('brightness(1.15) saturate(1.1)')">ناعم</button>
-<button class="filters" onclick="filter('sepia(.25) brightness(1.1)')">دافئ</button>
-<button class="filters" onclick="filter('grayscale(1)')">أبيض وأسود</button>
+<button class="filters" onclick="setFilter('none')">طبيعي</button>
+<button class="filters" onclick="setFilter('brightness(1.15) saturate(1.2)')">ناعم</button>
+<button class="filters" onclick="setFilter('sepia(.25) brightness(1.1)')">دافئ</button>
+<button class="filters" onclick="setFilter('grayscale(1)')">أبيض وأسود</button>
 </div>
-<button onclick="switchCamera()">تبديل الكاميرا</button>
+<button onclick="switchCamera()">تبديل الكاميرا 🔄</button>
 <button id="capture" onclick="takePhoto()">📸 التقاط الصورة</button>
 <canvas id="photo" hidden></canvas>
 <script>
 const video=document.getElementById('camera');
-let facing='user',stream;
-async function start(){
-if(stream)stream.getTracks().forEach(t=>t.stop());
+const status=document.getElementById('status');
+let facing='user';
+let stream=null;
+
+async function startCamera(){
 try{
+if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+throw new Error('المتصفح لا يدعم تشغيل الكاميرا');
+}
+if(stream) stream.getTracks().forEach(t=>t.stop());
+status.textContent='جارٍ تشغيل الكاميرا...';
 stream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:facing},audio:false
 });
 video.srcObject=stream;
-}catch(e){alert('اسمح للتطبيق باستخدام الكاميرا')}
+await video.play();
+status.textContent='الكاميرا تعمل بنجاح ❤️';
+}catch(e){
+status.textContent='تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا واستخدم Chrome.';
 }
-function filter(f){video.style.filter=f}
+}
+
+function setFilter(f){
+video.style.filter=f;
+}
+
 function switchCamera(){
-facing=facing==='user'?'environment':'user';start();
+facing=facing==='user'?'environment':'user';
+startCamera();
 }
+
 function takePhoto(){
+if(!stream || !video.videoWidth){
+status.textContent='شغّل الكاميرا أولاً';
+return;
+}
 const c=document.getElementById('photo');
-c.width=video.videoWidth;c.height=video.videoHeight;
+c.width=video.videoWidth;
+c.height=video.videoHeight;
 const ctx=c.getContext('2d');
 ctx.filter=getComputedStyle(video).filter;
 ctx.drawImage(video,0,0,c.width,c.height);
 const a=document.createElement('a');
 a.href=c.toDataURL('image/png');
-a.download='Bashar-Snap.png';a.click();
+a.download='Bashar-Snap.png';
+a.click();
 }
-start();
 </script>
 </body>
 </html>
