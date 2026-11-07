@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bashar Snap</title>
+<style>
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
+h1{color:#fffc00}
+video,canvas{width:100%;max-height:65vh;object-fit:cover}
+button{padding:13px;margin:7px;border:0;border-radius:22px;font-size:16px}
+.filters{background:#292929;color:white}
+#capture{background:#fffc00;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>👻 Bashar Snap</h1>
+<video id="camera" autoplay playsinline></video>
+<div>
+<button class="filters" onclick="filter('none')">طبيعي</button>
+<button class="filters" onclick="filter('brightness(1.15) saturate(1.1)')">ناعم</button>
+<button class="filters" onclick="filter('sepia(.25) brightness(1.1)')">دافئ</button>
+<button class="filters" onclick="filter('grayscale(1)')">أبيض وأسود</button>
+</div>
+<button onclick="switchCamera()">تبديل الكاميرا</button>
+<button id="capture" onclick="takePhoto()">📸 التقاط الصورة</button>
+<canvas id="photo" hidden></canvas>
+<script>
+const video=document.getElementById('camera');
+let facing='user',stream;
+async function start(){
+if(stream)stream.getTracks().forEach(t=>t.stop());
+try{
+stream=await navigator.mediaDevices.getUserMedia({
+video:{facingMode:facing},audio:false
+});
+video.srcObject=stream;
+}catch(e){alert('اسمح للتطبيق باستخدام الكاميرا')}
+}
+function filter(f){video.style.filter=f}
+function switchCamera(){
+facing=facing==='user'?'environment':'user';start();
+}
+function takePhoto(){
+const c=document.getElementById('photo');
+c.width=video.videoWidth;c.height=video.videoHeight;
+const ctx=c.getContext('2d');
+ctx.filter=getComputedStyle(video).filter;
+ctx.drawImage(video,0,0,c.width,c.height);
+const a=document.createElement('a');
+a.href=c.toDataURL('image/png');
+a.download='Bashar-Snap.png';a.click();
+}
+start();
+</script>
+</body>
+</html>
