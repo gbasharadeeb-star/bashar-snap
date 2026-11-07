@@ -4,140 +4,395 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111111">
 <title>Bashar Snap</title>
+
 <style>
 *{box-sizing:border-box}
+
 body{
   margin:0;
-  padding:15px;
-  background:#111;
+  padding:16px;
+  background:#101010;
   color:white;
   font-family:Arial,sans-serif;
   text-align:center;
 }
-h1{color:#fffc00;font-size:30px}
-p{color:#eee}
+
+header{padding:10px 0 15px}
+
+h1{
+  color:#fffc00;
+  font-size:32px;
+  margin:8px;
+}
+
+.subtitle{
+  color:#aaa;
+  font-size:14px;
+}
+
+.camera-box{
+  position:relative;
+  width:100%;
+  max-width:500px;
+  margin:auto;
+  overflow:hidden;
+  border-radius:24px;
+  background:#222;
+  border:2px solid #333;
+  min-height:250px;
+}
+
 video{
+  display:block;
   width:100%;
   max-height:60vh;
+  min-height:250px;
   object-fit:cover;
-  border-radius:20px;
-  background:#222;
+  filter:none;
 }
+
+.camera-label{
+  position:absolute;
+  top:12px;
+  right:12px;
+  background:#0009;
+  padding:7px 12px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+#status{
+  color:#ddd;
+  font-size:14px;
+  min-height:22px;
+  margin:15px 0;
+}
+
 button{
-  padding:13px 17px;
-  margin:6px;
   border:0;
   border-radius:25px;
-  font-size:16px;
+  padding:12px 17px;
+  margin:5px;
+  font-size:15px;
+  font-weight:bold;
   cursor:pointer;
 }
-.filters{background:#292929;color:white}
-.filters.active{
+
+button:active{transform:scale(.96)}
+
+.main-btn{
   background:#fffc00;
   color:#111;
-  font-weight:bold;
 }
-#capture{
+
+.secondary{
+  background:#292929;
+  color:white;
+  border:1px solid #444;
+}
+
+h3{
+  color:#fffc00;
+  margin-top:25px;
+}
+
+.filters{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:5px;
+}
+
+.filter-btn{
+  background:#292929;
+  color:white;
+  border:1px solid #444;
+}
+
+.filter-btn.active{
   background:#fffc00;
-  font-weight:bold;
-  font-size:19px;
+  color:#111;
+  border-color:#fffc00;
 }
-#status{color:#ddd;padding:12px}
+
+#capture{
+  width:75px;
+  height:75px;
+  border-radius:50%;
+  background:#fffc00;
+  color:#111;
+  font-size:30px;
+  border:5px solid white;
+  padding:0;
+  margin:20px 10px;
+}
+
+.actions{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.preview-box{
+  margin:20px auto;
+  max-width:350px;
+}
+
+#preview{
+  width:100%;
+  border-radius:18px;
+  display:none;
+  border:2px solid #fffc00;
+}
+
+#download{
+  display:none;
+  text-decoration:none;
+  background:#fffc00;
+  color:#111;
+  padding:12px 20px;
+  border-radius:25px;
+  font-weight:bold;
+  margin:12px auto;
+}
+
+footer{
+  color:#777;
+  font-size:12px;
+  margin:30px 0 10px;
+}
 </style>
 </head>
+
 <body>
 
-<h1>👻 Bashar Snap</h1>
-<p>كاميرتك الخاصة 📸</p>
+<header>
+  <h1>👻 Bashar Snap</h1>
+  <div class="subtitle">لحظاتك الجميلة تبدأ هنا ❤️</div>
+</header>
 
-<video id="camera" autoplay playsinline muted></video>
+<div class="camera-box">
+  <video id="camera" autoplay playsinline muted></video>
+  <div class="camera-label">📸 BASHAR SNAP</div>
+</div>
 
 <p id="status">اضغط تشغيل الكاميرا للبدء ❤️</p>
 
-<button onclick="startCamera()">تشغيل الكاميرا 📷</button>
-
-<h3>✨ اختر الفلتر الذي تحبه</h3>
-
-<div>
-<button class="filters active" onclick="setFilter('none',this)">طبيعي</button>
-<button class="filters" onclick="setFilter('brightness(1.2) saturate(1.2) contrast(1.05)',this)">ناعم ✨</button>
-<button class="filters" onclick="setFilter('sepia(.3) brightness(1.1) saturate(1.3)',this)">ذهبي 🌅</button>
-<button class="filters" onclick="setFilter('brightness(1.1) saturate(1.4) hue-rotate(330deg)',this)">وردي 🌸</button>
-<button class="filters" onclick="setFilter('contrast(1.15) saturate(1.5)',this)">حيوي 💖</button>
-<button class="filters" onclick="setFilter('brightness(1.15) contrast(.9) saturate(.8)',this)">حالم ☁️</button>
-<button class="filters" onclick="setFilter('sepia(.5) contrast(1.1)',this)">كلاسيكي 🎞️</button>
-<button class="filters" onclick="setFilter('grayscale(1)',this)">أبيض وأسود</button>
+<div class="actions">
+  <button class="main-btn" id="start">📷 تشغيل الكاميرا</button>
+  <button class="secondary" id="switch">🔄 تبديل الكاميرا</button>
 </div>
 
-<button onclick="switchCamera()">تبديل الكاميرا 🔄</button>
-<br>
-<button id="capture" onclick="takePhoto()">📸 التقاط الصورة</button>
+<h3>✨ اختر الفلتر المفضل</h3>
 
-<canvas id="photo" hidden></canvas>
+<div class="filters">
+
+  <button class="filter-btn active" data-filter="none">
+    طبيعي
+  </button>
+
+  <button class="filter-btn" data-filter="brightness(1.15) saturate(1.2) contrast(1.05)">
+    ✨ ناعم
+  </button>
+
+  <button class="filter-btn" data-filter="sepia(.3) brightness(1.1) saturate(1.3)">
+    🌅 ذهبي
+  </button>
+
+  <button class="filter-btn" data-filter="brightness(1.1) saturate(1.4) hue-rotate(330deg)">
+    🌸 وردي
+  </button>
+
+  <button class="filter-btn" data-filter="contrast(1.15) saturate(1.5)">
+    💖 حيوي
+  </button>
+
+  <button class="filter-btn" data-filter="brightness(1.15) contrast(.9) saturate(.8)">
+    ☁️ حالم
+  </button>
+
+  <button class="filter-btn" data-filter="sepia(.5) contrast(1.1)">
+    🎞️ كلاسيكي
+  </button>
+
+  <button class="filter-btn" data-filter="grayscale(1)">
+    أبيض وأسود
+  </button>
+
+</div>
+
+<div>
+  <button id="capture">📸</button>
+</div>
+
+<div class="preview-box">
+  <img id="preview" alt="الصورة الملتقطة">
+  <a id="download" download="Bashar-Snap.png">
+    ⬇️ حفظ الصورة
+  </a>
+</div>
+
+<footer>
+  Made with ❤️ by Bashar
+  <br>
+  © 2026 Bashar Snap
+</footer>
+
+<canvas id="canvas" hidden></canvas>
 
 <script>
-const video=document.getElementById('camera');
-const status=document.getElementById('status');
-let facing='user';
-let stream=null;
-let currentFilter='none';
+const video = document.getElementById("camera");
+const statusText = document.getElementById("status");
+const canvas = document.getElementById("canvas");
+const preview = document.getElementById("preview");
+const download = document.getElementById("download");
+
+let stream = null;
+let facing = "user";
+let currentFilter = "none";
 
 async function startCamera(){
-try{
-if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-throw new Error('المتصفح لا يدعم الكاميرا');
-}
-if(stream){
-stream.getTracks().forEach(t=>t.stop());
-}
-status.textContent='جارٍ تشغيل الكاميرا...';
-stream=await navigator.mediaDevices.getUserMedia({
-video:{facingMode:facing},
-audio:false
-});
-video.srcObject=stream;
-await video.play();
-status.textContent='الكاميرا تعمل بنجاح ❤️';
-}catch(e){
-status.textContent='تعذر تشغيل الكاميرا. اسمح للمتصفح باستخدام الكاميرا.';
-}
+
+  try{
+
+    if(!navigator.mediaDevices ||
+       !navigator.mediaDevices.getUserMedia){
+      throw new Error("unsupported");
+    }
+
+    if(stream){
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    statusText.textContent = "جارٍ تشغيل الكاميرا...";
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:{ideal:facing},
+        width:{ideal:1280},
+        height:{ideal:720}
+      }
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    video.style.transform =
+      facing === "user" ? "scaleX(-1)" : "none";
+
+    statusText.textContent =
+      "الكاميرا تعمل بنجاح ❤️";
+
+  }catch(error){
+
+    statusText.textContent =
+      "تعذر تشغيل الكاميرا. تأكد من السماح باستخدامها وفتح الموقع عبر اتصال آمن.";
+
+  }
 }
 
-function setFilter(filter,button){
-currentFilter=filter;
-video.style.filter=filter;
-document.querySelectorAll('.filters').forEach(b=>{
-b.classList.remove('active');
-});
-button.classList.add('active');
-}
+document.getElementById("start")
+.addEventListener("click",startCamera);
 
-function switchCamera(){
-facing=facing==='user'?'environment':'user';
-startCamera();
-}
+document.getElementById("switch")
+.addEventListener("click",()=>{
+
+  facing = facing === "user"
+    ? "environment"
+    : "user";
+
+  startCamera();
+
+});
+
+document.querySelectorAll(".filter-btn")
+.forEach(button=>{
+
+  button.addEventListener("click",()=>{
+
+    currentFilter = button.dataset.filter;
+
+    video.style.filter = currentFilter;
+
+    document.querySelectorAll(".filter-btn")
+    .forEach(b=>b.classList.remove("active"));
+
+    button.classList.add("active");
+
+  });
+
+});
+
+document.getElementById("capture")
+.addEventListener("click",takePhoto);
 
 function takePhoto(){
-if(!stream || !video.videoWidth){
-status.textContent='شغّل الكاميرا أولاً 📷';
-return;
-}
-const c=document.getElementById('photo');
-c.width=video.videoWidth;
-c.height=video.videoHeight;
-const ctx=c.getContext('2d');
-ctx.filter=currentFilter;
-ctx.drawImage(video,0,0,c.width,c.height);
 
-const a=document.createElement('a');
-a.href=c.toDataURL('image/png');
-a.download='Bashar-Snap.png';
-a.click();
+  if(!stream || !video.videoWidth){
 
-status.textContent='تم التقاط صورتك بنجاح ❤️';
+    statusText.textContent =
+      "شغّل الكاميرا أولاً 📷";
+
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.filter = currentFilter;
+
+  if(facing === "user"){
+
+    ctx.translate(canvas.width,0);
+    ctx.scale(-1,1);
+
+  }
+
+  ctx.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  canvas.toBlob(blob=>{
+
+    if(!blob){
+      statusText.textContent =
+        "تعذر حفظ الصورة. حاول مرة أخرى.";
+      return;
+    }
+
+    const imageURL = URL.createObjectURL(blob);
+
+    preview.src = imageURL;
+    preview.style.display = "block";
+
+    download.href = imageURL;
+    download.style.display = "inline-block";
+
+    statusText.textContent =
+      "تم التقاط صورتك بنجاح ❤️";
+
+  },"image/png");
+
 }
+
+window.addEventListener("pagehide",()=>{
+
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+  }
+
+});
+
 </script>
-
 </body>
 </html>
