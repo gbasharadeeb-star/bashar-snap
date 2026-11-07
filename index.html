@@ -21,11 +21,14 @@ button{padding:13px;margin:6px;border:0;border-radius:22px;font-size:16px;cursor
 <p>كاميرتك الخاصة 📸</p>
 <video id="camera" autoplay playsinline muted></video>
 <p id="status">اضغط تشغيل الكاميرا للبدء</p>
-<button onclick="startCamera()">تشغيل الكاميرا 📷</button>
-<div>
 <button class="filters" onclick="setFilter('none')">طبيعي</button>
-<button class="filters" onclick="setFilter('brightness(1.15) saturate(1.2)')">ناعم</button>
-<button class="filters" onclick="setFilter('sepia(.25) brightness(1.1)')">دافئ</button>
+<button class="filters" onclick="setFilter('brightness(1.2) saturate(1.2) contrast(1.05)')">ناعم ✨</button>
+<button class="filters" onclick="setFilter('sepia(.3) brightness(1.1) saturate(1.3)')">ذهبي 🌅</button>
+<button class="filters" onclick="setFilter('brightness(1.1) saturate(1.4) hue-rotate(330deg)')">وردي 🌸</button>
+<button class="filters" onclick="setFilter('contrast(1.15) saturate(1.5)')">حيوي 💖</button>
+<button class="filters" onclick="setFilter('brightness(1.15) contrast(.9) saturate(.8)')">حالم ☁️</button>
+<button class="filters" onclick="setFilter('sepia(.5) contrast(1.1)')">كلاسيكي 🎞️</button>
+<button class="filters" onclick="setFilter('grayscale(1)')">أبيض وأسود</button>
 <button class="filters" onclick="setFilter('grayscale(1)')">أبيض وأسود</button>
 </div>
 <button onclick="switchCamera()">تبديل الكاميرا 🔄</button>
