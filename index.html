@@ -1,634 +1,363 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#111111">
-<title>Bashar Snap</title>
-
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<title>Bashar Snap 3D</title>
 <style>
 *{box-sizing:border-box}
-
-body{
- margin:0;
- padding:15px;
- background:#101010;
- color:white;
- font-family:Arial,sans-serif;
- text-align:center;
-}
-
-h1{color:#fffc00;font-size:30px}
-.subtitle{color:#aaa}
-
-.camera-box{
- position:relative;
- max-width:500px;
- margin:auto;
- overflow:hidden;
- border-radius:22px;
- background:#222;
- border:2px solid #444;
-}
-
-video{
- display:block;
- width:100%;
- height:auto;
- max-height:60vh;
- object-fit:contain;
- filter:none;
-}
-
-#overlay{
- position:absolute;
- top:0;
- left:0;
- width:100%;
- height:100%;
- pointer-events:none;
-}
-
-#status{
- color:#ddd;
- padding:12px;
- font-size:14px;
- min-height:40px;
-}
-
-button{
- border:0;
- border-radius:25px;
- padding:12px 16px;
- margin:5px;
- font-size:15px;
- font-weight:bold;
- cursor:pointer;
-}
-
-.main{
- background:#fffc00;
- color:#111;
-}
-
-.secondary{
- background:#292929;
- color:white;
- border:1px solid #444;
-}
-
-h3{
- color:#fffc00;
- margin-top:25px;
-}
-
-.filters,.effects{
- display:flex;
- flex-wrap:wrap;
- justify-content:center;
- gap:5px;
-}
-
-.filter-btn,.effect-btn{
- background:#292929;
- color:white;
- border:1px solid #444;
-}
-
-.active{
- background:#fffc00!important;
- color:#111!important;
-}
-
-#capture{
- width:75px;
- height:75px;
- border-radius:50%;
- background:#fffc00;
- color:#111;
- font-size:30px;
- border:5px solid white;
- padding:0;
- margin:20px;
-}
-
-#preview{
- display:none;
- width:100%;
- max-width:350px;
- margin:20px auto;
- border-radius:18px;
- border:2px solid #fffc00;
-}
-
-#download{
- display:none;
- background:#fffc00;
- color:#111;
- padding:12px 22px;
- border-radius:25px;
- text-decoration:none;
- font-weight:bold;
-}
-
-footer{
- color:#777;
- font-size:12px;
- margin-top:30px;
-}
+body{margin:0;padding:15px;background:#101010;color:#fff;font-family:Arial,sans-serif;text-align:center}
+h1{color:#fffc00;font-size:30px}.subtitle{color:#aaa}
+.camera-box{position:relative;width:100%;max-width:500px;margin:auto;overflow:hidden;border-radius:22px;background:#222;border:2px solid #444}
+video{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain}
+#overlay,#threeLayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#overlay{z-index:2}#threeLayer{z-index:3}
+#status,#faceStatus{color:#ddd;padding:10px;font-size:14px;min-height:28px}
+button{border:0;border-radius:25px;padding:12px 16px;margin:5px;font-size:15px;font-weight:bold;cursor:pointer}
+.main{background:#fffc00;color:#111}.secondary{background:#292929;color:#fff;border:1px solid #444}
+h3{color:#fffc00;margin-top:25px}
+.filters,.effects{display:flex;flex-wrap:wrap;justify-content:center;gap:5px}
+.filter-btn,.effect-btn{background:#292929;color:#fff;border:1px solid #444}
+.active{background:#fffc00!important;color:#111!important}
+#capture{width:75px;height:75px;border-radius:50%;background:#fffc00;color:#111;font-size:30px;border:5px solid #fff;padding:0;margin:20px}
+.beauty-panel{max-width:500px;margin:14px auto;padding:15px;background:#1d1d1d;border:1px solid #383838;border-radius:18px;text-align:right}
+.beauty-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#beautyRange{width:100%;accent-color:#fffc00;margin:16px 0 8px}
+#beautyValue{color:#fffc00;font-weight:bold}
+.small-note{color:#999;font-size:12px;line-height:1.7;margin:5px 0}
+#preview{display:none;width:100%;max-width:350px;margin:20px auto;border-radius:18px;border:2px solid #fffc00}
+#download{display:none;background:#fffc00;color:#111;padding:12px 22px;border-radius:25px;text-decoration:none;font-weight:bold}
+footer{color:#777;font-size:12px;margin-top:30px}
 </style>
 </head>
-
 <body>
-
 <h1>👻 Bashar Snap</h1>
-<p class="subtitle">كاميرتك الخاصة ❤️</p>
+<p class="subtitle">كاميرتك الخاصة ❤️ — إصدار المؤثرات ثلاثية الأبعاد</p>
 
-<div class="camera-box">
- <video id="camera" autoplay playsinline muted></video>
- <canvas id="overlay"></canvas>
+<div class="camera-box" id="cameraBox">
+  <video id="camera" autoplay playsinline muted></video>
+  <canvas id="overlay"></canvas>
+  <canvas id="threeLayer"></canvas>
 </div>
-
 <p id="status">مرحباً بك في Bashar Snap 📸</p>
+<button class="main" id="start">📷 تشغيل الكاميرا</button>
+<button class="secondary" id="switch">🔄 تبديل الكاميرا</button>
 
-<button class="main" id="start">
- 📷 تشغيل الكاميرا
-</button>
-
-<button class="secondary" id="switch">
- 🔄 تبديل الكاميرا
-</button>
-
-<h3>✨ الفلاتر</h3>
-
+<h3>✨ الفلاتر اللونية</h3>
 <div class="filters">
-
- <button class="filter-btn active"
- data-filter="none">طبيعي</button>
-
- <button class="filter-btn"
- data-filter="brightness(1.15) saturate(1.2)">
- ناعم ✨</button>
-
- <button class="filter-btn"
- data-filter="sepia(.3) brightness(1.1) saturate(1.3)">
- ذهبي 🌅</button>
-
- <button class="filter-btn"
- data-filter="brightness(1.1) saturate(1.4) hue-rotate(330deg)">
- وردي 🌸</button>
-
- <button class="filter-btn"
- data-filter="contrast(1.15) saturate(1.5)">
- حيوي 💖</button>
-
- <button class="filter-btn"
- data-filter="grayscale(1)">
- أبيض وأسود</button>
-
+  <button class="filter-btn active" data-filter="none">طبيعي</button>
+  <button class="filter-btn" data-filter="brightness(1.12) saturate(1.18)">ناعم ✨</button>
+  <button class="filter-btn" data-filter="sepia(.3) brightness(1.1) saturate(1.3)">ذهبي 🌅</button>
+  <button class="filter-btn" data-filter="brightness(1.1) saturate(1.4) hue-rotate(330deg)">وردي 🌸</button>
+  <button class="filter-btn" data-filter="contrast(1.15) saturate(1.5)">حيوي 💖</button>
+  <button class="filter-btn" data-filter="grayscale(1)">أبيض وأسود</button>
 </div>
 
-<h3>👑 تأثيرات الوجه الذكية</h3>
+<h3>🌸 تجميل الوجه</h3>
+<div class="beauty-panel">
+  <div class="beauty-head"><b>تنعيم وإضاءة خفيفة</b><span id="beautyValue">45%</span></div>
+  <input id="beautyRange" type="range" min="0" max="100" value="45">
+  <div class="beauty-head"><span class="small-note">0% بدون تجميل — 100% أقوى</span><button class="secondary" id="beautyToggle">إيقاف التجميل</button></div>
+  <p class="small-note">تأثير تجميلي خفيف داخل حدود الوجه عند اكتشافه.</p>
+</div>
 
+<h3>🧊 فلاتر ثلاثية الأبعاد</h3>
 <div class="effects">
-
- <button class="effect-btn active"
- data-effect="none">بدون تأثير</button>
-
- <button class="effect-btn"
- data-effect="glasses">😎 نظارات</button>
-
- <button class="effect-btn"
- data-effect="crown">👑 تاج</button>
-
- <button class="effect-btn"
- data-effect="hearts">💕 قلوب</button>
-
+  <button class="effect-btn active" data-effect="none">بدون تأثير</button>
+  <button class="effect-btn" data-effect="puppy">🐶 كلب ثلاثي الأبعاد</button>
+  <button class="effect-btn" data-effect="cat">🐱 قطة ثلاثية الأبعاد</button>
+  <button class="effect-btn" data-effect="crown">👑 تاج ثلاثي الأبعاد</button>
+  <button class="effect-btn" data-effect="glasses">😎 نظارات ثلاثية الأبعاد</button>
 </div>
+<p class="small-note">حرّك رأسك ببطء لتجربة تتبع المؤثرات. تتطلب النماذج والرسوم اتصالاً بالإنترنت.</p>
 
-<div>
- <button id="capture">📸</button>
-</div>
-
-<img id="preview" alt="الصورة الملتقطة">
-
-<br>
-
-<a id="download" download="Bashar-Snap.png">
- ⬇️ حفظ الصورة
-</a>
-
-<p id="faceStatus">تقنية التعرف على الوجه قيد التحميل...</p>
-
-<footer>
- Made with ❤️ by Bashar
- <br>
- © 2026 Bashar Snap
-</footer>
-
+<div><button id="capture">📸</button></div>
+<img id="preview" alt="الصورة الملتقطة"><br>
+<a id="download" download="Bashar-Snap-3D.png">⬇️ حفظ الصورة</a>
+<p id="faceStatus">تقنية تتبع الوجه ثلاثي الأبعاد قيد التحميل...</p>
+<footer>Made with ❤️ by Bashar<br>© 2026 Bashar Snap</footer>
 <canvas id="photo" hidden></canvas>
 
 <script type="module">
-
-import {
- FilesetResolver,
- FaceLandmarker
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import {FilesetResolver,FaceLandmarker} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
 const video=document.getElementById("camera");
-const overlay=document.getElementById("overlay");
-const ctx=overlay.getContext("2d");
-const status=document.getElementById("status");
-const faceStatus=document.getElementById("faceStatus");
+const overlay=document.getElementById("overlay"),ctx=overlay.getContext("2d");
+const threeCanvas=document.getElementById("threeLayer");
+const status=document.getElementById("status"),faceStatus=document.getElementById("faceStatus");
+const photo=document.getElementById("photo"),preview=document.getElementById("preview"),download=document.getElementById("download");
+const beautyRange=document.getElementById("beautyRange"),beautyValue=document.getElementById("beautyValue"),beautyToggle=document.getElementById("beautyToggle");
 
-const photo=document.getElementById("photo");
-const preview=document.getElementById("preview");
-const download=document.getElementById("download");
+let stream=null,facing="user",currentFilter="none",currentEffect="none";
+let faceLandmarker=null,running=false,lastTime=-1,animationId=null,lastImageURL=null;
+let beautyEnabled=true,beautyLevel=45,faceGroup=null,threeRenderer=null,threeScene=null,threeCamera=null;
+const material=(color,roughness=.45,metalness=.05)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const mats={
+  brown:material(0x9b5a2d),brownLight:material(0xc9874b),pink:material(0xff9fbd),
+  black:material(0x171717,.25),white:material(0xffffff),gold:material(0xffd21c,.25,.7),
+  purple:material(0x9b55e8,.3,.25),blue:material(0x42c9ff,.25,.35)
+};
 
-let stream=null;
-let facing="user";
-let currentFilter="none";
-let currentEffect="none";
-let faceLandmarker=null;
-let running=false;
-let lastTime=-1;
-let lastImageURL=null;
+function makeMesh(geometry,mat,x,y,z=0){
+  const mesh=new THREE.Mesh(geometry,mat);mesh.position.set(x,y,z);return mesh;
+}
+function addEllipsoid(group,mat,x,y,z,sx,sy,sz,rz=0){
+  const m=makeMesh(new THREE.SphereGeometry(1,24,16),mat,x,y,z);
+  m.scale.set(sx,sy,sz);m.rotation.z=rz;group.add(m);return m;
+}
+function buildFilter(type){
+  const group=new THREE.Group();
+  if(type==="puppy"||type==="cat"){
+    const isCat=type==="cat";
+    const earMat=isCat?mats.brownLight:mats.brown;
+    [-1,1].forEach(side=>{
+      const ear=makeMesh(new THREE.SphereGeometry(1,24,16),earMat,side*0.63,-0.72,0);
+      ear.scale.set(isCat?.25:.34,isCat?.63:.48,.22);
+      ear.rotation.z=side*(isCat?-.18:.48);group.add(ear);
+      if(isCat){
+        const inner=makeMesh(new THREE.ConeGeometry(.19,.52,3),mats.pink,side*.63,-.68,.20);
+        inner.rotation.z=side*-.18;group.add(inner);
+      }
+    });
+    // Face details: separate 3D muzzle, nose, eyes and an animated jaw.
+    addEllipsoid(group,mats.white,-.19,.12,.35,.34,.23,.18);
+    addEllipsoid(group,mats.white,.19,.12,.35,.34,.23,.18);
+    addEllipsoid(group,mats.black,0,.02,.57,.12,.085,.09);
+    const eyeMat=material(0x24170f,.2);
+    const eyeWhite=material(0xffffff,.2);
+    group.userData.eyeParts=[];
+    [-1,1].forEach(side=>{
+      addEllipsoid(group,eyeWhite,side*.29,.43,.30,.105,.12,.075);
+      const eye=addEllipsoid(group,eyeMat,side*.29,.43,.37,.052,.075,.035);
+      group.userData.eyeParts.push(eye);
+      addEllipsoid(group,mats.white,side*.305,.46,.40,.018,.022,.012);
+    });
+    if(isCat){
+      const mouth=addEllipsoid(group,mats.pink,0,-.13,.43,.13,.035,.045);
+      group.userData.mouthPart=mouth;
+      const jaw=addEllipsoid(group,mats.white,0,-.22,.31,.22,.075,.12);
+      group.userData.jawPart=jaw;
+      [-1,1].forEach(side=>{
+        addEllipsoid(group,mats.white,side*.34,.32,.2,.16,.12,.1);
+        addEllipsoid(group,mats.black,side*.28,.25,.3,.045,.045,.04);
+      });
+      // Whiskers
+      [-1,1].forEach(side=>{
+        for(let i=0;i<3;i++){
+          const line=makeMesh(new THREE.CylinderGeometry(.008,.008,.48,6),mats.white,side*.48,.08+i*.07,.3);
+          line.rotation.z=side*(Math.PI/2-.16+i*.12);group.add(line);
+        }
+      });
+    }else{
+      addEllipsoid(group,mats.brownLight,0,.48,.05,.25,.18,.16);
+      const jaw=addEllipsoid(group,mats.brownLight,0,-.23,.28,.29,.12,.15);
+      group.userData.jawPart=jaw;
+      const mouth=addEllipsoid(group,mats.black,0,-.16,.43,.16,.018,.035);
+      group.userData.mouthPart=mouth;
+    }
+  }
+  if(type==="crown"){
+    const base=makeMesh(new THREE.CylinderGeometry(.65,.72,.22,32),mats.gold,0,0,0);
+    group.add(base);
+    for(let i=0;i<5;i++){
+      const x=(i-2)*.29;
+      const spike=makeMesh(new THREE.ConeGeometry(.17,.58,4),mats.gold,x,.34,0);
+      spike.rotation.z=(2-i)*-.13;group.add(spike);
+      addEllipsoid(group,mats.purple,x,.67,.02,.075,.075,.075);
+    }
+  }
+  if(type==="glasses"){
+    [-1,1].forEach(side=>{
+      const lens=makeMesh(new THREE.TorusGeometry(.42,.075,10,32),mats.gold,side*.48,0,0);
+      lens.scale.set(1,.72,1);group.add(lens);
+      const glass=makeMesh(new THREE.CircleGeometry(.36,32),new THREE.MeshBasicMaterial({color:0x39bfff,transparent:true,opacity:.22,side:THREE.DoubleSide}),side*.48,0,-.03);
+      glass.scale.y=.72;group.add(glass);
+    });
+    const bridge=makeMesh(new THREE.BoxGeometry(.25,.07,.08),mats.gold,0,.02,0);group.add(bridge);
+    [-1,1].forEach(side=>{
+      const arm=makeMesh(new THREE.BoxGeometry(.48,.055,.055),mats.gold,side*.92,.02,-.04);
+      arm.rotation.z=side*-.08;group.add(arm);
+    });
+  }
+  group.visible=false;threeScene.add(group);return group;
+}
+
+function initThree(){
+  threeScene=new THREE.Scene();
+  threeCamera=new THREE.OrthographicCamera(-250,250,250,-250,.1,3000);
+  threeCamera.position.set(0,0,1000);threeCamera.lookAt(0,0,0);
+  threeRenderer=new THREE.WebGLRenderer({canvas:threeCanvas,alpha:true,antialias:true,preserveDrawingBuffer:true});
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  threeRenderer.setClearColor(0x000000,0);
+  threeScene.add(new THREE.AmbientLight(0xffffff,2));
+  const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(-1,2,5);threeScene.add(light);
+  resizeThree(500,700);
+}
+function resizeThree(w,h){
+  if(!threeRenderer)return;
+  threeRenderer.setSize(w,h,false);
+  threeCamera.left=-w/2;threeCamera.right=w/2;threeCamera.top=h/2;threeCamera.bottom=-h/2;
+  threeCamera.updateProjectionMatrix();
+}
+initThree();
 
 async function loadFaceModel(){
-
- try{
-
-  faceStatus.textContent="جارٍ تحميل تقنية الوجه الذكية...";
-
-  const vision=await FilesetResolver.forVisionTasks(
-   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-  );
-
-  faceLandmarker=await FaceLandmarker.createFromOptions(
-   vision,
-   {
-    baseOptions:{
-     modelAssetPath:
-     "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-    },
-    runningMode:"VIDEO",
-    numFaces:1
-   }
-  );
-
-  faceStatus.textContent="تم تجهيز التعرف على الوجه ❤️";
-
-  if(stream) startTracking();
-
- }catch(error){
-
-  faceStatus.textContent=
-  "تعذر تحميل تقنية الوجه. تحقق من اتصال الإنترنت.";
-
-  console.error(error);
-
- }
-
-}
-
-async function startCamera(){
-
- try{
-
-  if(!navigator.mediaDevices?.getUserMedia){
-   throw new Error("Camera unavailable");
-  }
-
-  if(stream){
-   stream.getTracks().forEach(track=>track.stop());
-  }
-
-  running=false;
-
-  status.textContent="جارٍ تشغيل الكاميرا...";
-
-  stream=await navigator.mediaDevices.getUserMedia({
-   audio:false,
-   video:{
-    facingMode:{ideal:facing},
-    width:{ideal:1280},
-    height:{ideal:720}
-   }
-  });
-
-  video.srcObject=stream;
-  await video.play();
-
-  video.style.transform=
-   facing==="user"?"scaleX(-1)":"none";
-
-  overlay.style.transform=
-   facing==="user"?"scaleX(-1)":"none";
-
-  overlay.width=video.videoWidth;
-  overlay.height=video.videoHeight;
-
-  status.textContent="الكاميرا تعمل بنجاح ❤️";
-
-  if(faceLandmarker){
-   startTracking();
-  }
-
- }catch(error){
-
-  status.textContent=
-   "تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا.";
-
- }
-
-}
-
-document.getElementById("start")
-.addEventListener("click",startCamera);
-
-document.getElementById("switch")
-.addEventListener("click",()=>{
-
- facing=facing==="user"?"environment":"user";
- startCamera();
-
-});
-
-document.querySelectorAll(".filter-btn")
-.forEach(button=>{
-
- button.addEventListener("click",()=>{
-
-  currentFilter=button.dataset.filter;
-  video.style.filter=currentFilter;
-
-  document.querySelectorAll(".filter-btn")
-  .forEach(b=>b.classList.remove("active"));
-
-  button.classList.add("active");
-
- });
-
-});
-
-document.querySelectorAll(".effect-btn")
-.forEach(button=>{
-
- button.addEventListener("click",()=>{
-
-  currentEffect=button.dataset.effect;
-
-  document.querySelectorAll(".effect-btn")
-  .forEach(b=>b.classList.remove("active"));
-
-  button.classList.add("active");
-
- });
-
-});
-
-function startTracking(){
-
- if(running)return;
-
- running=true;
- renderLoop();
-
-}
-
-function renderLoop(){
-
- if(!running || !faceLandmarker || !stream)return;
-
- if(video.readyState>=2 && video.currentTime!==lastTime){
-
-  lastTime=video.currentTime;
-
   try{
-
-   const result=faceLandmarker.detectForVideo(
-    video,
-    performance.now()
-   );
-
-   ctx.clearRect(0,0,overlay.width,overlay.height);
-
-   if(result.faceLandmarks.length>0){
-
-    faceStatus.textContent="تم التعرف على وجهك ❤️";
-
-    if(currentEffect!=="none"){
-     drawEffect(result.faceLandmarks[0]);
-    }
-
-   }else{
-
-    faceStatus.textContent="ضع وجهك أمام الكاميرا 📷";
-
-   }
-
+    faceStatus.textContent="جارٍ تحميل محرك تتبع الوجه...";
+    const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
+    faceLandmarker=await FaceLandmarker.createFromOptions(vision,{
+      baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"},
+      runningMode:"VIDEO",numFaces:1,outputFacialTransformationMatrixes:true
+    });
+    faceStatus.textContent="تم تجهيز تتبع الوجه ثلاثي الأبعاد ❤️";
+    if(stream)startTracking();
   }catch(error){
-
-   console.error(error);
-
+    faceStatus.textContent="تعذر تحميل محرك الوجه. تحقق من الإنترنت ثم أعد فتح الصفحة.";
+    console.error(error);
   }
-
- }
-
- requestAnimationFrame(renderLoop);
-
 }
-
-function point(landmarks,index){
-
- return {
-  x:landmarks[index].x*overlay.width,
-  y:landmarks[index].y*overlay.height
- };
-
+async function startCamera(){
+  try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error("Camera unavailable");
+    running=false;if(animationId)cancelAnimationFrame(animationId);
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    status.textContent="جارٍ تشغيل الكاميرا...";
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}}});
+    video.srcObject=stream;await video.play();
+    video.style.transform=facing==="user"?"scaleX(-1)":"none";
+    overlay.style.transform=facing==="user"?"scaleX(-1)":"none";
+    threeCanvas.style.transform=facing==="user"?"scaleX(-1)":"none";
+    overlay.width=video.videoWidth;overlay.height=video.videoHeight;
+    resizeThree(video.videoWidth,video.videoHeight);
+    status.textContent="الكاميرا تعمل بنجاح ❤️";
+    if(faceLandmarker)startTracking();
+  }catch(error){status.textContent="تعذر تشغيل الكاميرا. اسمح بالوصول للكاميرا وافتح الموقع عبر HTTPS.";console.error(error);}
 }
-
-function drawEffect(landmarks){
-
- const width=overlay.width;
- const height=overlay.height;
-
- ctx.save();
- ctx.textAlign="center";
- ctx.textBaseline="middle";
-
- const leftEye=point(landmarks,468);
- const rightEye=point(landmarks,473);
- const forehead=point(landmarks,10);
-
- const faceLeft=point(landmarks,127);
- const faceRight=point(landmarks,356);
-
- const faceWidth=Math.abs(faceRight.x-faceLeft.x);
-
- if(currentEffect==="glasses"){
-
-  const eyeDistance=Math.hypot(
-   rightEye.x-leftEye.x,
-   rightEye.y-leftEye.y
-  );
-
-  const size=eyeDistance*0.65;
-
-  ctx.fillStyle="#111";
-  ctx.strokeStyle="#fffc00";
-  ctx.lineWidth=Math.max(3,width*0.004);
-
-  [leftEye,rightEye].forEach(eye=>{
-
-   ctx.beginPath();
-   ctx.ellipse(
-    eye.x,eye.y,
-    size/2,size*0.34,
-    0,0,Math.PI*2
-   );
-
-   ctx.fill();
-   ctx.stroke();
-
-  });
-
-  ctx.beginPath();
-  ctx.moveTo(leftEye.x+size/2,leftEye.y);
-  ctx.lineTo(rightEye.x-size/2,rightEye.y);
-  ctx.stroke();
-
- }
-
- if(currentEffect==="crown"){
-
-  ctx.font=`${faceWidth*0.85}px Arial`;
-
-  ctx.fillText(
-   "👑",
-   forehead.x,
-   forehead.y-faceWidth*0.32
-  );
-
- }
-
- if(currentEffect==="hearts"){
-
-  const cheekLeft=point(landmarks,234);
-  const cheekRight=point(landmarks,454);
-
-  ctx.font=`${faceWidth*0.25}px Arial`;
-
-  ctx.fillText(
-   "💕",
-   cheekLeft.x,
-   cheekLeft.y
-  );
-
-  ctx.fillText(
-   "💕",
-   cheekRight.x,
-   cheekRight.y
-  );
-
-  ctx.font=`${faceWidth*0.2}px Arial`;
-
-  ctx.fillText(
-   "💗",
-   forehead.x,
-   forehead.y-faceWidth*0.3
-  );
-
- }
-
- ctx.restore();
-
-}
-
-function takePhoto(){
-
- if(!stream || !video.videoWidth){
-
-  status.textContent="شغّل الكاميرا أولاً 📷";
-  return;
-
- }
-
- photo.width=video.videoWidth;
- photo.height=video.videoHeight;
-
- const pctx=photo.getContext("2d");
-
- pctx.save();
-
- if(facing==="user"){
-  pctx.translate(photo.width,0);
-  pctx.scale(-1,1);
- }
-
- pctx.filter=currentFilter;
-
- pctx.drawImage(
-  video,
-  0,0,
-  photo.width,
-  photo.height
- );
-
- pctx.filter="none";
-
- pctx.drawImage(
-  overlay,
-  0,0,
-  photo.width,
-  photo.height
- );
-
- pctx.restore();
-
- photo.toBlob(blob=>{
-
-  if(!blob)return;
-
-  if(lastImageURL){
-   URL.revokeObjectURL(lastImageURL);
-  }
-
-  lastImageURL=URL.createObjectURL(blob);
-
-  preview.src=lastImageURL;
-  preview.style.display="block";
-
-  download.href=lastImageURL;
-  download.style.display="inline-block";
-
-  status.textContent="تم التقاط الصورة بنجاح ❤️";
-
- },"image/png");
-
-}
-
-document.getElementById("capture")
-.addEventListener("click",takePhoto);
-
-loadFaceModel();
-
-window.addEventListener("pagehide",()=>{
-
- running=false;
-
- if(stream){
-  stream.getTracks().forEach(track=>track.stop());
- }
-
- if(lastImageURL){
-  URL.revokeObjectURL(lastImageURL);
- }
-
+document.getElementById("start").addEventListener("click",startCamera);
+document.getElementById("switch").addEventListener("click",()=>{facing=facing==="user"?"environment":"user";startCamera();});
+document.querySelectorAll(".filter-btn").forEach(b=>b.addEventListener("click",()=>{
+  currentFilter=b.dataset.filter;video.style.filter=currentFilter;
+  document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+}));
+document.querySelectorAll(".effect-btn").forEach(b=>b.addEventListener("click",()=>{
+  currentEffect=b.dataset.effect;
+  document.querySelectorAll(".effect-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  if(faceGroup){threeScene.remove(faceGroup);faceGroup=null;}
+  if(currentEffect!=="none")faceGroup=buildFilter(currentEffect);
+}));
+beautyRange.addEventListener("input",()=>{beautyLevel=Number(beautyRange.value);beautyValue.textContent=beautyLevel+"%";});
+beautyToggle.addEventListener("click",()=>{
+  beautyEnabled=!beautyEnabled;beautyToggle.textContent=beautyEnabled?"إيقاف التجميل":"تشغيل التجميل";
+  beautyToggle.classList.toggle("active",!beautyEnabled);
 });
-
+function startTracking(){if(running)return;running=true;renderLoop();}
+function pt(lm,i){return {x:lm[i].x*overlay.width,y:lm[i].y*overlay.height,z:lm[i].z*overlay.width};}
+function renderLoop(){
+  if(!running||!faceLandmarker||!stream)return;
+  if(video.readyState>=2&&video.currentTime!==lastTime){
+    lastTime=video.currentTime;
+    try{
+      const result=faceLandmarker.detectForVideo(video,performance.now());
+      ctx.clearRect(0,0,overlay.width,overlay.height);
+      if(result.faceLandmarks.length){
+        const lm=result.faceLandmarks[0];
+        faceStatus.textContent="وجهك متصل بالمؤثر ثلاثي الأبعاد ❤️";
+        if(beautyEnabled&&beautyLevel>0)drawBeauty(lm);
+        if(faceGroup&&currentEffect!=="none")update3D(lm);
+      }else{
+        faceStatus.textContent="ضع وجهك أمام الكاميرا 📷";
+        if(faceGroup)faceGroup.visible=false;
+      }
+    }catch(e){console.error(e);}
+  }
+  threeRenderer.render(threeScene,threeCamera);
+  animationId=requestAnimationFrame(renderLoop);
+}
+function drawBeauty(lm){
+  const top=pt(lm,10),chin=pt(lm,152),left=pt(lm,234),right=pt(lm,454);
+  const cx=(left.x+right.x)/2,cy=(top.y+chin.y)/2;
+  const rx=Math.abs(right.x-left.x)*.59,ry=Math.abs(chin.y-top.y)*.62;
+  const s=beautyLevel/100;
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.clip();
+  ctx.globalAlpha=.13+s*.32;ctx.filter=`blur(${1+s*4}px) brightness(${1+s*.08})`;
+  ctx.drawImage(video,0,0,overlay.width,overlay.height);ctx.restore();
+}
+function update3D(lm){
+  const left=pt(lm,33),right=pt(lm,263),nose=pt(lm,1),top=pt(lm,10),chin=pt(lm,152);
+  const midX=(left.x+right.x)/2,midY=(left.y+right.y)/2;
+  const eyeDist=Math.hypot(right.x-left.x,right.y-left.y);
+  const faceWidth=Math.hypot(pt(lm,454).x-pt(lm,234).x,pt(lm,454).y-pt(lm,234).y);
+  const roll=Math.atan2(right.y-left.y,right.x-left.x);
+  const yaw=(nose.x-midX)/Math.max(eyeDist,1);
+  const pitch=(nose.y-midY)/Math.max(eyeDist,1);
+  // Mouth opening and eye blink are estimated from MediaPipe face landmarks.
+  const upperLip=pt(lm,13),lowerLip=pt(lm,14);
+  const mouthOpen=Math.max(0,Math.min(1,(Math.hypot(lowerLip.x-upperLip.x,lowerLip.y-upperLip.y)/Math.max(faceWidth,1)-.012)*10));
+  const eyeOpenLeft=Math.hypot(pt(lm,159).x-pt(lm,145).x,pt(lm,159).y-pt(lm,145).y)/Math.max(eyeDist,1);
+  const eyeOpenRight=Math.hypot(pt(lm,386).x-pt(lm,374).x,pt(lm,386).y-pt(lm,374).y)/Math.max(eyeDist,1);
+  const blink=Math.max(0,Math.min(1,1-(Math.min(eyeOpenLeft,eyeOpenRight)-.015)*24));
+  const scale=faceWidth/(currentEffect==="glasses"?eyeDist*2.15:1.9);
+  const anchorY=currentEffect==="crown"?top.y-faceWidth*.22:currentEffect==="glasses"?midY:top.y-faceWidth*.08;
+  faceGroup.visible=true;
+  faceGroup.position.set(midX-overlay.width/2,overlay.height/2-anchorY,Math.max(-80,Math.min(80,-nose.z*100)));
+  faceGroup.rotation.set(-pitch*.32,yaw*.55,-roll);
+  faceGroup.scale.setScalar(scale);
+  if(currentEffect==="puppy"||currentEffect==="cat"){
+    faceGroup.position.y-=faceWidth*.02;
+    // The jaw drops when the user's mouth opens; eyes narrow during a blink.
+    if(faceGroup.userData.jawPart){
+      faceGroup.userData.jawPart.position.y=-.23-mouthOpen*.16;
+      faceGroup.userData.jawPart.scale.y=(currentEffect==="cat"?.075:.12)+mouthOpen*.13;
+    }
+    if(faceGroup.userData.mouthPart){
+      faceGroup.userData.mouthPart.scale.y=.018+mouthOpen*.10;
+      faceGroup.userData.mouthPart.position.y=-.16-mouthOpen*.09;
+    }
+    (faceGroup.userData.eyeParts||[]).forEach(eye=>{
+      eye.scale.y=.075*(1-blink*.88);
+    });
+  }
+  if(currentEffect==="glasses")faceGroup.position.y=overlay.height/2-midY;
+  if(currentEffect==="crown")faceGroup.scale.setScalar(faceWidth/1.55);
+}
+function takePhoto(){
+  if(!stream||!video.videoWidth){status.textContent="شغّل الكاميرا أولاً 📷";return;}
+  photo.width=video.videoWidth;photo.height=video.videoHeight;
+  const p=photo.getContext("2d");p.save();
+  if(facing==="user"){p.translate(photo.width,0);p.scale(-1,1);}
+  p.filter=currentFilter;p.drawImage(video,0,0,photo.width,photo.height);p.filter="none";
+  // دمج طبقة التتبع والطبقة ثلاثية الأبعاد في الصورة المحفوظة
+  if(facing==="user"){p.translate(photo.width,0);p.scale(-1,1);}
+  p.drawImage(overlay,0,0,photo.width,photo.height);
+  p.drawImage(threeCanvas,0,0,photo.width,photo.height);
+  p.restore();
+  photo.toBlob(blob=>{
+    if(!blob)return;if(lastImageURL)URL.revokeObjectURL(lastImageURL);
+    lastImageURL=URL.createObjectURL(blob);preview.src=lastImageURL;preview.style.display="block";
+    download.href=lastImageURL;download.style.display="inline-block";status.textContent="تم التقاط الصورة بنجاح ❤️";
+  },"image/png");
+}
+document.getElementById("capture").addEventListener("click",takePhoto);
+loadFaceModel();
+window.addEventListener("pagehide",()=>{
+  running=false;if(animationId)cancelAnimationFrame(animationId);
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  if(lastImageURL)URL.revokeObjectURL(lastImageURL);
+});
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => {
+      console.warn("Service worker registration failed:", err);
+    });
+  });
+}
+</script>
 </body>
 </html>
