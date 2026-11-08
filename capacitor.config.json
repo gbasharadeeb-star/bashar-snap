@@ -1,0 +1,6 @@
+{
+  "appId": "com.bashar.snap",
+  "appName": "Bashar Snap",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
