@@ -1,3 +1,4 @@
+
 name: Build Bashar Snap Android APK
 
 on:
@@ -27,6 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Install Android package
+        run: npm install @capacitor/android@^7
 
       - name: Add Android platform
         run: npx cap add android
