@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -69,13 +68,14 @@ video,#preview{width:100%;height:100%;object-fit:cover}
 </div>
 
 <div class="actions">
-<button class="side" id="save" title="حفظ">↓</button>
-<button class="capture" id="capture" title="تصوير"></button>
-<button class="side" id="retake" title="إعادة">⟳</button>
+<button class="side" id="save">↓</button>
+<button class="capture" id="capture"></button>
+<button class="side" id="retake">⟳</button>
 </div>
 <div class="bottom">Bashar Snap © 2026</div>
 </section>
 </div>
+
 <canvas id="canvas" class="hidden"></canvas>
 
 <script>
@@ -84,6 +84,7 @@ const preview=document.getElementById("preview");
 const canvas=document.getElementById("canvas");
 const statusText=document.getElementById("status");
 const permission=document.getElementById("permission");
+
 let stream=null;
 let facing="user";
 let currentFilter="none";
@@ -91,23 +92,63 @@ let photo=null;
 
 async function startCamera(){
 try{
-if(stream)stream.getTracks().forEach(t=>t.stop());
+statusText.textContent="جار طلب إذن الكاميرا...";
+
+const nativePlugin=window.Capacitor?.Plugins?.CameraPermission;
+
+if(!nativePlugin){
+throw new Error("CAMERA_PERMISSION_PLUGIN_NOT_FOUND");
+}
+
+const permissionResult=await nativePlugin.request();
+
+if(!permissionResult.granted){
+throw new Error("CAMERA_PERMISSION_DENIED");
+}
+
+if(!navigator.mediaDevices?.getUserMedia){
+throw new Error("GET_USER_MEDIA_NOT_AVAILABLE");
+}
+
+if(stream){
+stream.getTracks().forEach(t=>t.stop());
+}
+
 statusText.textContent="جار تشغيل الكاميرا...";
+
 stream=await navigator.mediaDevices.getUserMedia({
 audio:false,
-video:{facingMode:facing,width:{ideal:1280},height:{ideal:1920}}
+video:{
+facingMode:facing,
+width:{ideal:1280},
+height:{ideal:1920}
+}
 });
+
 video.srcObject=stream;
 await video.play();
+
 video.style.display="block";
 preview.style.display="none";
 video.style.filter=currentFilter;
+
 permission.classList.add("hidden");
 statusText.textContent="BASHAR SNAP";
+
 }catch(e){
+console.error("Bashar Snap camera error:",e);
+
 permission.classList.remove("hidden");
 statusText.textContent="تعذر تشغيل الكاميرا";
-permission.querySelector("p").textContent="اسمح للتطبيق باستخدام الكاميرا وتحقق من الصلاحيات.";
+
+const messages={
+CAMERA_PERMISSION_PLUGIN_NOT_FOUND:"لم يتم العثور على خدمة إذن الكاميرا. نحتاج إلى مراجعة بناء التطبيق.",
+CAMERA_PERMISSION_DENIED:"لم تسمح باستخدام الكاميرا. تحقق من إذن الكاميرا في إعدادات الهاتف.",
+GET_USER_MEDIA_NOT_AVAILABLE:"خدمة الكاميرا غير متاحة في هذه النسخة."
+};
+
+permission.querySelector("p").textContent=
+messages[e.message] || "حدث خطأ أثناء تشغيل الكاميرا: "+e.message;
 }
 }
 
@@ -132,17 +173,22 @@ if(!stream||!video.videoWidth){
 statusText.textContent="افتح الكاميرا أولاً";
 return;
 }
+
 canvas.width=video.videoWidth;
 canvas.height=video.videoHeight;
+
 const ctx=canvas.getContext("2d");
 ctx.save();
+
 if(facing==="user"){
 ctx.translate(canvas.width,0);
 ctx.scale(-1,1);
 }
+
 ctx.filter=currentFilter;
 ctx.drawImage(video,0,0,canvas.width,canvas.height);
 ctx.restore();
+
 photo=canvas.toDataURL("image/jpeg",0.95);
 preview.src=photo;
 preview.style.display="block";
@@ -155,6 +201,7 @@ if(!photo){
 statusText.textContent="التقط صورة أولاً";
 return;
 }
+
 const a=document.createElement("a");
 a.href=photo;
 a.download="Bashar-Snap.jpg";
@@ -166,17 +213,22 @@ if(stream){
 preview.style.display="none";
 video.style.display="block";
 statusText.textContent="BASHAR SNAP";
-}else startCamera();
+}else{
+startCamera();
+}
 };
 
 document.getElementById("gallery").onclick=()=>{
 const picker=document.createElement("input");
 picker.type="file";
 picker.accept="image/*";
+
 picker.onchange=()=>{
 const file=picker.files[0];
 if(!file)return;
+
 const reader=new FileReader();
+
 reader.onload=()=>{
 photo=reader.result;
 preview.src=photo;
@@ -184,8 +236,10 @@ preview.style.display="block";
 video.style.display="none";
 statusText.textContent="الصورة من المعرض";
 };
+
 reader.readAsDataURL(file);
 };
+
 picker.click();
 };
 </script>
