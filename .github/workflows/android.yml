@@ -1,4 +1,3 @@
-
 name: Build Bashar Snap Android APK
 
 on:
@@ -40,8 +39,65 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Add camera permission
+      - name: Add camera permission bridge
         run: |
+          mkdir -p android/app/src/main/java/com/bashar/snap
+
+          cat > android/app/src/main/java/com/bashar/snap/CameraPermissionPlugin.java <<'EOF'
+          package com.bashar.snap;
+
+          import android.Manifest;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.PermissionState;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import com.getcapacitor.annotation.Permission;
+          import com.getcapacitor.annotation.PermissionCallback;
+
+          @CapacitorPlugin(
+              name = "CameraPermission",
+              permissions = {
+                  @Permission(alias = "camera", strings = { Manifest.permission.CAMERA })
+              }
+          )
+          public class CameraPermissionPlugin extends Plugin {
+              @PluginMethod
+              public void request(PluginCall call) {
+                  if (getPermissionState("camera") == PermissionState.GRANTED) {
+                      JSObject result = new JSObject();
+                      result.put("granted", true);
+                      call.resolve(result);
+                  } else {
+                      requestPermissionForAlias("camera", call, "cameraPermsCallback");
+                  }
+              }
+
+              @PermissionCallback
+              private void cameraPermsCallback(PluginCall call) {
+                  JSObject result = new JSObject();
+                  result.put("granted", getPermissionState("camera") == PermissionState.GRANTED);
+                  call.resolve(result);
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/com/bashar/snap/MainActivity.java <<'EOF'
+          package com.bashar.snap;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(CameraPermissionPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
+
           sed -i '/<manifest/a\    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
 
       - name: Sync Android
