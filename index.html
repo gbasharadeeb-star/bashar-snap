@@ -3,243 +3,298 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#080808">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bashar Snap</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#080808;color:white;font-family:Arial,sans-serif;overflow:hidden}
-.app{height:100dvh;display:flex;flex-direction:column}
-header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
-.logo{color:#ffeb00;font-size:22px;font-weight:bold}
-button{cursor:pointer}
-.topbtn{background:none;border:0;color:white;font-size:27px}
-.camera{flex:1;position:relative;overflow:hidden;background:#181818}
-video,#preview{width:100%;height:100%;object-fit:cover}
-#preview{display:none;position:absolute;inset:0;background:#000}
-#status{position:absolute;top:15px;left:0;right:0;text-align:center;text-shadow:0 2px 5px #000;z-index:2}
-#permission{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#111;text-align:center;padding:20px;z-index:3}
-#permission button{background:#ffeb00;color:#000;border:0;border-radius:25px;padding:13px 25px;font-weight:bold}
-.hidden{display:none!important}
-.controls{background:#080808;padding:12px 10px 18px}
-.filters{display:flex;gap:13px;overflow-x:auto;padding:8px 0 18px;scrollbar-width:none}
-.filters::-webkit-scrollbar{display:none}
-.filter{flex:0 0 62px;text-align:center;font-size:11px;color:#aaa}
-.circle{height:52px;width:52px;border-radius:50%;margin:0 auto 7px;border:2px solid #555;background:linear-gradient(135deg,#333,#999)}
-.filter.active{color:#ffeb00}
-.filter.active .circle{border:3px solid #ffeb00}
-.actions{height:75px;display:flex;align-items:center;justify-content:space-around}
-.side{background:none;border:0;color:white;font-size:28px;width:55px}
-.capture{width:70px;height:70px;border-radius:50%;border:5px solid white;background:#ffeb00;box-shadow:0 0 0 4px #555}
-.bottom{text-align:center;color:#777;font-size:11px;padding-top:5px}
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101018;color:white;
+ font-family:Arial,sans-serif;text-align:center
+}
+header{padding:16px;color:#ffe45e;font-size:25px;font-weight:bold}
+.camera{
+ position:relative;width:94%;max-width:500px;
+ margin:auto;border-radius:22px;overflow:hidden;
+ background:#222;aspect-ratio:3/4
+}
+video,canvas{
+ position:absolute;width:100%;height:100%;
+ top:0;left:0;object-fit:cover
+}
+#effects{pointer-events:none}
+.controls{padding:15px}
+button{
+ border:0;border-radius:25px;padding:12px 17px;
+ margin:5px;background:#29293b;color:white;
+ font-size:15px
+}
+button.active{background:#ffca28;color:#111}
+#capture{background:#ffca28;color:#111;font-weight:bold}
+#status{color:#ffe45e;font-size:13px;margin:10px}
+.lenses{display:flex;overflow-x:auto;gap:8px;padding:10px}
+.lenses button{min-width:95px}
 </style>
 </head>
 <body>
-<div class="app">
-<header>
-<button class="topbtn" id="gallery">▧</button>
-<div class="logo">BASHAR SNAP</div>
-<button class="topbtn" id="switch">↻</button>
-</header>
 
-<main class="camera">
-<video id="video" autoplay playsinline muted></video>
-<img id="preview" alt="الصورة">
-<div id="status">BASHAR SNAP</div>
-<div id="permission">
-<div style="font-size:55px">📸</div>
-<h2>مرحباً بك في Bashar Snap</h2>
-<p>التقط أجمل صورك مع الفلاتر</p>
-<button id="start">فتح الكاميرا</button>
-</div>
-</main>
+<header>✨ Bashar Snap ✨</header>
 
-<section class="controls">
-<div class="filters">
-<div class="filter active" data-filter="none"><div class="circle"></div>عادي</div>
-<div class="filter" data-filter="grayscale(1)"><div class="circle" style="filter:grayscale(1)"></div>أبيض وأسود</div>
-<div class="filter" data-filter="sepia(.8)"><div class="circle" style="filter:sepia(.8)"></div>كلاسيكي</div>
-<div class="filter" data-filter="saturate(1.8)"><div class="circle" style="filter:saturate(1.8)"></div>ألوان</div>
-<div class="filter" data-filter="contrast(1.5)"><div class="circle" style="filter:contrast(1.5)"></div>تباين</div>
-<div class="filter" data-filter="brightness(1.3)"><div class="circle" style="filter:brightness(1.3)"></div>إضاءة</div>
-<div class="filter" data-filter="hue-rotate(90deg)"><div class="circle" style="filter:hue-rotate(90deg)"></div>أخضر</div>
-<div class="filter" data-filter="hue-rotate(180deg)"><div class="circle" style="filter:hue-rotate(180deg)"></div>بارد</div>
-<div class="filter" data-filter="saturate(1.5) sepia(.2)"><div class="circle" style="filter:saturate(1.5) sepia(.2)"></div>دافئ</div>
-<div class="filter" data-filter="brightness(1.1) contrast(1.1)"><div class="circle" style="filter:brightness(1.1) contrast(1.1)"></div>ناعم</div>
+<div class="camera">
+ <video id="video" autoplay playsinline muted></video>
+ <canvas id="effects"></canvas>
 </div>
 
-<div class="actions">
-<button class="side" id="save">↓</button>
-<button class="capture" id="capture"></button>
-<button class="side" id="retake">⟳</button>
-</div>
-<div class="bottom">Bashar Snap © 2026</div>
-</section>
+<div id="status">جارٍ تجهيز الكاميرا...</div>
+
+<div class="lenses" id="lenses">
+ <button data-filter="none" class="active">بدون عدسة</button>
+ <button data-filter="mustache">🥸 شارب</button>
+ <button data-filter="eyes">👀 عيون كبيرة</button>
+ <button data-filter="heart">❤️ قلوب</button>
+ <button data-filter="dog">🐶 كلب</button>
+ <button data-filter="crown">👑 تاج</button>
+ <button data-filter="nose">👃 أنف صغير</button>
+ <button data-filter="bighead">🤪 رأس مضحك</button>
+ <button data-filter="beauty">✨ تجميل</button>
+ <button data-filter="stars">🌟 نجوم</button>
 </div>
 
-<canvas id="canvas" class="hidden"></canvas>
+<div class="controls">
+ <button id="switch">🔄 تبديل الكاميرا</button>
+ <button id="capture">📸 التقاط الصورة</button>
+ <button id="save">💾 حفظ الصورة</button>
+ <input type="file" id="gallery" accept="image/*" hidden>
+ <button id="choose">🖼️ اختيار صورة</button>
+</div>
 
-<script>
+<script type="module">
+import {
+ FaceLandmarker,
+ FilesetResolver
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
 const video=document.getElementById("video");
-const preview=document.getElementById("preview");
-const canvas=document.getElementById("canvas");
-const statusText=document.getElementById("status");
-const permission=document.getElementById("permission");
+const canvas=document.getElementById("effects");
+const ctx=canvas.getContext("2d");
+const status=document.getElementById("status");
 
+let cameraSide="user";
 let stream=null;
-let facing="user";
-let currentFilter="none";
-let photo=null;
+let filter="none";
+let landmarker=null;
+let lastPhoto=null;
 
 async function startCamera(){
-try{
-statusText.textContent="جار طلب إذن الكاميرا...";
+ try{
+  if(stream) stream.getTracks().forEach(t=>t.stop());
 
-const nativePlugin=window.Capacitor?.Plugins?.CameraPermission;
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:cameraSide,width:720,height:960},
+   audio:false
+  });
 
-if(nativePlugin){
-const permissionResult=await nativePlugin.request();
-
-if(permissionResult && permissionResult.granted===false){
-throw new Error("CAMERA_PERMISSION_DENIED");
-}
-}
-
-if(!navigator.mediaDevices?.getUserMedia){
-throw new Error("GET_USER_MEDIA_NOT_AVAILABLE");
-}
-
-if(stream){
-stream.getTracks().forEach(t=>t.stop());
+  video.srcObject=stream;
+  await video.play();
+  status.textContent="الكاميرا تعمل بنجاح ❤️";
+ }catch(e){
+  status.textContent="تعذر تشغيل الكاميرا. تحقق من الإذن.";
+ }
 }
 
-statusText.textContent="جار تشغيل الكاميرا...";
+async function startFaceTracking(){
+ try{
+  const vision=await FilesetResolver.forVisionTasks(
+   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
 
-stream=await navigator.mediaDevices.getUserMedia({
-audio:false,
-video:{
-facingMode:facing,
-width:{ideal:1280},
-height:{ideal:1920}
+  landmarker=await FaceLandmarker.createFromOptions(vision,{
+   baseOptions:{
+    modelAssetPath:
+    "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+    delegate:"GPU"
+   },
+   runningMode:"VIDEO",
+   numFaces:1
+  });
+
+  status.textContent="تتبع الوجه جاهز! 😍";
+ }catch(e){
+  status.textContent="الكاميرا تعمل، لكن تعذر تحميل تتبع الوجه.";
+ }
 }
-});
 
-video.srcObject=stream;
-await video.play();
+function drawSticker(x,y,size,emoji){
+ ctx.font=size+"px Arial";
+ ctx.textAlign="center";
+ ctx.fillText(emoji,x,y);
+}
 
-video.style.display="block";
-preview.style.display="none";
-video.style.filter=currentFilter;
+function drawEffects(){
+ requestAnimationFrame(drawEffects);
 
-permission.classList.add("hidden");
-statusText.textContent="BASHAR SNAP";
+ if(!video.videoWidth)return;
 
-}catch(e){
-console.error("Bashar Snap camera error:",e);
+ const w=video.clientWidth;
+ const h=video.clientHeight;
 
-permission.classList.remove("hidden");
-statusText.textContent="تعذر تشغيل الكاميرا";
+ if(canvas.width!==w*devicePixelRatio ||
+    canvas.height!==h*devicePixelRatio){
+  canvas.width=w*devicePixelRatio;
+  canvas.height=h*devicePixelRatio;
+ }
 
-const messages={
-CAMERA_PERMISSION_DENIED:"لم تسمح باستخدام الكاميرا. تحقق من إذن الكاميرا في إعدادات الهاتف.",
-GET_USER_MEDIA_NOT_AVAILABLE:"خدمة الكاميرا غير متاحة في هذه النسخة."
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+ ctx.clearRect(0,0,w,h);
+
+ if(!landmarker || video.readyState<2)return;
+
+ try{
+  const result=landmarker.detectForVideo(video,performance.now());
+  if(!result.faceLandmarks.length)return;
+
+  const p=result.faceLandmarks[0];
+  const X=i=>p[i].x*w;
+  const Y=i=>p[i].y*h;
+
+  const leftEye={x:X(468),y:Y(468)};
+  const rightEye={x:X(473),y:Y(473)};
+  const nose={x:X(1),y:Y(1)};
+  const mouth={x:X(13),y:Y(13)};
+  const width=Math.abs(X(234)-X(454));
+
+  if(filter==="mustache"){
+   ctx.font=(width*.24)+"px Arial";
+   ctx.textAlign="center";
+   ctx.fillText("🥸",nose.x,mouth.y+width*.12);
+  }
+
+  if(filter==="eyes"){
+   [leftEye,rightEye].forEach(e=>{
+    ctx.beginPath();
+    ctx.fillStyle="white";
+    ctx.arc(e.x,e.y,width*.085,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.fillStyle="#222";
+    ctx.arc(e.x,e.y,width*.035,0,Math.PI*2);
+    ctx.fill();
+   });
+  }
+
+  if(filter==="heart"){
+   drawSticker(X(10)*1,Y(10),width*.3,"❤️");
+   drawSticker(X(152),Y(152),width*.2,"💕");
+  }
+
+  if(filter==="dog"){
+   drawSticker(X(234),Y(234),width*.35,"🐶");
+   drawSticker(X(454),Y(454),width*.35,"🐶");
+  }
+
+  if(filter==="crown"){
+   drawSticker(X(10),Y(10)-width*.2,width*.35,"👑");
+  }
+
+  if(filter==="nose"){
+   drawSticker(nose.x,nose.y+width*.06,width*.13,"🐽");
+  }
+
+  if(filter==="bighead"){
+   ctx.beginPath();
+   ctx.ellipse(
+    (X(234)+X(454))/2,
+    (Y(10)+Y(152))/2,
+    width*.62,width*.68,0,0,Math.PI*2
+   );
+   ctx.strokeStyle="#ffca28";
+   ctx.lineWidth=5;
+   ctx.stroke();
+   drawSticker(nose.x,Y(10)-width*.3,width*.25,"🤪");
+  }
+
+  if(filter==="beauty"){
+   ctx.beginPath();
+   ctx.arc(nose.x,nose.y,width*.55,0,Math.PI*2);
+   ctx.strokeStyle="rgba(255,180,220,.7)";
+   ctx.lineWidth=3;
+   ctx.stroke();
+  }
+
+  if(filter==="stars"){
+   drawSticker(X(10),Y(10),width*.22,"✨");
+   drawSticker(X(152),Y(152),width*.2,"🌟");
+  }
+
+ }catch(e){}
+}
+
+document.getElementById("lenses").onclick=e=>{
+ const b=e.target.closest("button[data-filter]");
+ if(!b)return;
+ filter=b.dataset.filter;
+ document.querySelectorAll(".lenses button")
+ .forEach(x=>x.classList.toggle("active",x===b));
 };
-
-permission.querySelector("p").textContent=
-messages[e.message] || "حدث خطأ أثناء تشغيل الكاميرا: "+e.message;
-}
-}
-
-document.getElementById("start").onclick=startCamera;
 
 document.getElementById("switch").onclick=()=>{
-facing=facing==="user"?"environment":"user";
-startCamera();
+ cameraSide=cameraSide==="user"?"environment":"user";
+ startCamera();
 };
 
-document.querySelectorAll(".filter").forEach(item=>{
-item.onclick=()=>{
-document.querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));
-item.classList.add("active");
-currentFilter=item.dataset.filter;
-video.style.filter=currentFilter;
-};
-});
+function makePhoto(){
+ const out=document.createElement("canvas");
+ out.width=video.videoWidth;
+ out.height=video.videoHeight;
+ const c=out.getContext("2d");
+
+ c.drawImage(video,0,0,out.width,out.height);
+ c.drawImage(canvas,0,0,out.width,out.height);
+
+ return out.toDataURL("image/jpeg",0.95);
+}
 
 document.getElementById("capture").onclick=()=>{
-if(!stream||!video.videoWidth){
-statusText.textContent="افتح الكاميرا أولاً";
-return;
-}
-
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
-
-const ctx=canvas.getContext("2d");
-ctx.save();
-
-if(facing==="user"){
-ctx.translate(canvas.width,0);
-ctx.scale(-1,1);
-}
-
-ctx.filter=currentFilter;
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
-ctx.restore();
-
-photo=canvas.toDataURL("image/jpeg",0.95);
-preview.src=photo;
-preview.style.display="block";
-video.style.display="none";
-statusText.textContent="تم التقاط الصورة ❤️";
+ if(!video.videoWidth){
+  status.textContent="انتظر حتى تعمل الكاميرا";
+  return;
+ }
+ lastPhoto=makePhoto();
+ status.textContent="تم التقاط الصورة! ❤️";
 };
 
 document.getElementById("save").onclick=()=>{
-if(!photo){
-statusText.textContent="التقط صورة أولاً";
-return;
-}
-
-const a=document.createElement("a");
-a.href=photo;
-a.download="Bashar-Snap.jpg";
-a.click();
+ if(!lastPhoto){
+  status.textContent="التقط صورة أولاً";
+  return;
+ }
+ const a=document.createElement("a");
+ a.href=lastPhoto;
+ a.download="Bashar-Snap.jpg";
+ a.click();
+ status.textContent="تم طلب حفظ الصورة";
 };
 
-document.getElementById("retake").onclick=()=>{
-if(stream){
-preview.style.display="none";
-video.style.display="block";
-statusText.textContent="BASHAR SNAP";
-}else{
-startCamera();
-}
+document.getElementById("choose").onclick=()=>{
+ document.getElementById("gallery").click();
 };
 
-document.getElementById("gallery").onclick=()=>{
-const picker=document.createElement("input");
-picker.type="file";
-picker.accept="image/*";
-
-picker.onchange=()=>{
-const file=picker.files[0];
-if(!file)return;
-
-const reader=new FileReader();
-
-reader.onload=()=>{
-photo=reader.result;
-preview.src=photo;
-preview.style.display="block";
-video.style.display="none";
-statusText.textContent="الصورة من المعرض";
+document.getElementById("gallery").onchange=e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ const url=URL.createObjectURL(file);
+ const img=new Image();
+ img.onload=()=>{
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  URL.revokeObjectURL(url);
+ };
+ img.src=url;
+ status.textContent="تم اختيار الصورة";
 };
 
-reader.readAsDataURL(file);
-};
-
-picker.click();
-};
+await startCamera();
+await startFaceTracking();
+drawEffects();
 </script>
 </body>
 </html>
