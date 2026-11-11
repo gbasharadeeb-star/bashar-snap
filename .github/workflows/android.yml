@@ -1,3 +1,4 @@
+
 name: Build Bashar Snap Android APK
 
 on:
@@ -39,7 +40,7 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Add camera permission bridge
+      - name: Add native camera and gallery plugins
         run: |
           mkdir -p android/app/src/main/java/com/bashar/snap
 
@@ -83,6 +84,107 @@ jobs:
           }
           EOF
 
+          cat > android/app/src/main/java/com/bashar/snap/GallerySavePlugin.java <<'EOF'
+          package com.bashar.snap;
+
+          import android.content.ContentValues;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Environment;
+          import android.provider.MediaStore;
+          import android.util.Base64;
+          import java.io.OutputStream;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "GallerySave")
+          public class GallerySavePlugin extends Plugin {
+
+              @PluginMethod
+              public void save(PluginCall call) {
+                  String dataUrl = call.getString("dataUrl");
+
+                  if (dataUrl == null || !dataUrl.contains(",")) {
+                      call.reject("الصورة غير صالحة");
+                      return;
+                  }
+
+                  if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                      call.reject("حفظ الصور بهذه الطريقة يحتاج Android 10 أو أحدث");
+                      return;
+                  }
+
+                  Uri imageUri = null;
+
+                  try {
+                      String base64 = dataUrl.substring(dataUrl.indexOf(",") + 1);
+                      byte[] imageBytes = Base64.decode(base64, Base64.DEFAULT);
+
+                      ContentValues values = new ContentValues();
+                      values.put(
+                          MediaStore.Images.Media.DISPLAY_NAME,
+                          "Bashar-Snap-" + System.currentTimeMillis() + ".jpg"
+                      );
+                      values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                      values.put(
+                          MediaStore.Images.Media.RELATIVE_PATH,
+                          Environment.DIRECTORY_PICTURES + "/Bashar Snap"
+                      );
+                      values.put(MediaStore.Images.Media.IS_PENDING, 1);
+
+                      imageUri = getContext().getContentResolver().insert(
+                          MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                          values
+                      );
+
+                      if (imageUri == null) {
+                          throw new Exception("تعذر إنشاء ملف الصورة");
+                      }
+
+                      try (OutputStream output = getContext()
+                              .getContentResolver()
+                              .openOutputStream(imageUri)) {
+
+                          if (output == null) {
+                              throw new Exception("تعذر فتح ملف الصورة");
+                          }
+
+                          output.write(imageBytes);
+                          output.flush();
+                      }
+
+                      ContentValues completed = new ContentValues();
+                      completed.put(MediaStore.Images.Media.IS_PENDING, 0);
+
+                      getContext().getContentResolver().update(
+                          imageUri,
+                          completed,
+                          null,
+                          null
+                      );
+
+                      JSObject result = new JSObject();
+                      result.put("saved", true);
+                      result.put("uri", imageUri.toString());
+                      call.resolve(result);
+
+                  } catch (Exception error) {
+                      if (imageUri != null) {
+                          getContext().getContentResolver().delete(
+                              imageUri,
+                              null,
+                              null
+                          );
+                      }
+                      call.reject("فشل حفظ الصورة في المعرض", error);
+                  }
+              }
+          }
+          EOF
+
           cat > android/app/src/main/java/com/bashar/snap/MainActivity.java <<'EOF'
           package com.bashar.snap;
 
@@ -93,6 +195,7 @@ jobs:
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(CameraPermissionPlugin.class);
+                  registerPlugin(GallerySavePlugin.class);
                   super.onCreate(savedInstanceState);
               }
           }
