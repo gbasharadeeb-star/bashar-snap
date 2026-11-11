@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101018">
+<title>Bashar Snap</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101018;color:#fff;font-family:Arial,sans-serif;text-align:center}
+header{padding:15px;color:#ffe45e;font-size:25px;font-weight:bold}
+.camera{position:relative;width:94%;max-width:500px;margin:auto;border-radius:22px;overflow:hidden;background:#222;aspect-ratio:3/4}
+video,#effects{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+video{display:block}
+#effects{pointer-events:none}
+.camera.mirror video,.camera.mirror #effects{transform:scaleX(-1)}
+#status{color:#ffe45e;font-size:13px;margin:10px;padding:0 12px;min-height:18px}
+.controls{padding:12px}
+button,select{border:0;border-radius:22px;padding:11px 14px;margin:4px;background:#29293b;color:#fff;font-size:14px}
+button:active{opacity:.75}
+button.active{background:#ffca28;color:#111;font-weight:bold}
+#capture{background:#ffca28;color:#111;font-weight:bold}
+.lens-categories{display:flex;gap:7px;overflow-x:auto;padding:8px 12px;scrollbar-width:none}
+.lens-categories button{white-space:nowrap}
+.lenses{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:8px 12px;max-height:210px;overflow-y:auto}
+.lenses button{margin:0;padding:10px 4px;border-radius:14px;font-size:13px;min-width:0}
+.note{color:#aaa;font-size:12px;padding:0 16px 12px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>✨ Bashar Snap ✨</header>
+
+<div class="camera mirror" id="cameraBox">
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="effects"></canvas>
+</div>
+<div id="status">جارٍ تشغيل الكاميرا...</div>
+
+<div class="controls">
+  <button id="switch">🔄 تبديل الكاميرا</button>
+  <button id="capture">📸 التقاط الصورة</button>
+  <button id="save">💾 حفظ الصورة</button>
+  <button id="choose">🖼️ اختيار صورة</button>
+  <input type="file" id="gallery" accept="image/*" hidden>
+</div>
+
+<div class="lens-categories" id="categories"></div>
+<div class="lenses" id="lenses"></div>
+<div class="note">اختر عدسة لبدء تتبع الوجه. يتم تحميل محرك التتبع عند الحاجة لتقليل بطء الكاميرا.</div>
+
+<script type="module">
+import {FaceLandmarker, FilesetResolver}
+  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("effects");
+const ctx = canvas.getContext("2d", {alpha:true});
+const statusBox = document.getElementById("status");
+const cameraBox = document.getElementById("cameraBox");
+const lensBox = document.getElementById("lenses");
+const categoryBox = document.getElementById("categories");
+
+let stream = null;
+let cameraSide = "user";
+let landmarker = null;
+let loadingTracker = false;
+let trackerFailed = false;
+let selectedLens = null;
+let lastPhotoUrl = null;
+let lastDetectionTime = 0;
+let latestFace = null;
+let animationStarted = false;
+
+const lensGroups = [
+  {name:"مضحكة", icon:"😂", emojis:["😂","🤪","😜","😎","🥸","🤡","👻","👽","🤖","💀","🙈","🐵","🐸","🐷","🐽","🦷","👅","🤓","😹","😈"]},
+  {name:"حيوانات", icon:"🐶", emojis:["🐶","🐱","🐼","🐻","🐨","🐯","🦁","🐸","🐵","🐰","🦊","🐷","🐮","🐔","🐧","🦄","🐲","🐺","🦋","🐝"]},
+  {name:"قلوب", icon:"❤️", emojis:["❤️","💕","💖","💗","💘","💝","💞","💓","💟","🩷","💜","💙","💚","💛","🧡","🤍","💌","🌹","🥰","😍"]},
+  {name:"ملكي", icon:"👑", emojis:["👑","💎","✨","🌟","⭐","☀️","🌙","🪽","🦚","🏵️","🌺","🌸","💐","🪷","🔱","⚜️","💫","🌈","🪄","🧚"]},
+  {name:"طبيعة", icon:"🌿", emojis:["🌿","🍀","🌻","🌼","🌷","🌵","🌴","🍁","🍂","🌊","❄️","🔥","🌪️","🌧️","☁️","🌞","🌛","🌠","🪻","🍄"]},
+  {name:"فضاء", icon:"🚀", emojis:["🚀","🪐","🌍","🌎","🌕","🌑","☄️","👽","🛸","🌌","⭐","🌟","💫","🌙","🛰️","🌞","🌈","⚡","🔮","🪄"]},
+  {name:"ستايل", icon:"💄", emojis:["💄","💋","👓","🕶️","🎀","👒","🧢","💍","💎","🪞","🪭","🪮","💅","🧿","🪬","🎭","🎩","👑","🌸","✨"]},
+  {name:"رموز", icon:"🎉", emojis:["🎉","🎊","🎈","🎁","🎀","🎵","🎶","🎸","🎧","🏆","🥇","⚽","🏀","🎯","🧸","🍭","🍬","🍩","🍓","🍉"]},
+  {name:"أقنعة", icon:"🎭", emojis:["🎭","👹","👺","👿","😈","💀","☠️","👻","🤖","👾","🧟","🧛","🧙","🦹","🦸","🥷","👽","🐲","🦖","🕷️"]},
+  {name:"سحر", icon:"🪄", emojis:["🪄","🔮","✨","💫","🌟","🪽","🦄","🧚","🧞","🧜","🧝","🌈","💖","🌙","⭐","🪷","🦋","🌺","💎","🔥"]}
+];
+
+// 10 مجموعات × 20 اختياراً = 200 إعداد عدسة.
+const allLenses = lensGroups.flatMap((group, groupIndex) =>
+  group.emojis.map((emoji, index) => ({
+    id: groupIndex * 20 + index,
+    group: group.name,
+    name: `${emoji} ${group.name} ${index + 1}`,
+    emoji,
+    second: group.emojis[(index + 7) % group.emojis.length],
+    tint: groupIndex === 6 ? "beauty" : (groupIndex === 2 ? "hearts" : "normal")
+  }))
+);
+
+function setStatus(message){ statusBox.textContent = message; }
+
+function fitCanvas(){
+  if(!video.videoWidth || !video.videoHeight) return;
+  if(canvas.width !== video.videoWidth || canvas.height !== video.videoHeight){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+  }
+}
+function stopCamera(){
+  if(stream){ stream.getTracks().forEach(track => track.stop()); stream = null; }
+}
+async function startCamera(){
+  try{
+    stopCamera();
+    latestFace = null;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const constraints = {
+      audio:false,
+      video:{
+        facingMode:{ideal:cameraSide},
+        width:{ideal:1280},
+        height:{ideal:720},
+        frameRate:{ideal:30,max:30}
+      }
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await new Promise((resolve,reject)=>{
+      if(video.readyState >= 1) return resolve();
+      video.onloadedmetadata = resolve;
+      video.onerror = reject;
+    });
+    await video.play();
+    cameraBox.classList.toggle("mirror", cameraSide === "user");
+    fitCanvas();
+    setStatus("الكاميرا تعمل. اختر عدسة إذا أردت المؤثرات ❤️");
+  }catch(error){
+    console.error(error);
+    setStatus("تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا وافتح التطبيق عبر HTTPS.");
+  }
+}
+
+async function loadTracker(){
+  if(landmarker || loadingTracker || trackerFailed) return;
+  loadingTracker = true;
+  setStatus("جارٍ تحميل تتبع الوجه لأول مرة...");
+  try{
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+    );
+    try{
+      landmarker = await FaceLandmarker.createFromOptions(vision,{
+        baseOptions:{
+          modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate:"GPU"
+        },
+        runningMode:"VIDEO",
+        numFaces:1
+      });
+    }catch(gpuError){
+      landmarker = await FaceLandmarker.createFromOptions(vision,{
+        baseOptions:{
+          modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate:"CPU"
+        },
+        runningMode:"VIDEO",
+        numFaces:1
+      });
+    }
+    setStatus("تتبع الوجه جاهز! اختر عدستك 😍");
+  }catch(error){
+    console.error(error);
+    trackerFailed = true;
+    setStatus("تعذر تحميل تتبع الوجه. تحقق من الإنترنت ثم أعد تحميل الصفحة.");
+  }finally{
+    loadingTracker = false;
+  }
+}
+
+function drawEmoji(x,y,size,emoji){
+  ctx.font = `${size}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(emoji,x,y);
+}
+function detectFace(now){
+  if(!selectedLens || !landmarker || video.readyState < 2) return;
+  // التحليل مرة كل 100ms بدلاً من تحليل كل إطار؛ هذا يقلل التقطيع.
+  if(now - lastDetectionTime < 100) return;
+  lastDetectionTime = now;
+  try{
+    const result = landmarker.detectForVideo(video,now);
+    latestFace = result.faceLandmarks?.length ? result.faceLandmarks[0] : null;
+  }catch(error){ console.warn("Face detection:",error); }
+}
+function renderEffects(){
+  requestAnimationFrame(renderEffects);
+  if(!video.videoWidth) return;
+  fitCanvas();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(!selectedLens || !latestFace) return;
+
+  const p = latestFace;
+  const w = canvas.width, h = canvas.height;
+  const x = i => p[i].x * w;
+  const y = i => p[i].y * h;
+  const faceWidth = Math.abs(x(234)-x(454));
+  if(!faceWidth) return;
+
+  // نقاط تقريبية حول العينين وأعلى الرأس والخدين.
+  const leftEye = {x:x(33),y:y(33)};
+  const rightEye = {x:x(263),y:y(263)};
+  const forehead = {x:x(10),y:y(10)};
+  const chin = {x:x(152),y:y(152)};
+  const leftCheek = {x:x(234),y:y(234)};
+  const rightCheek = {x:x(454),y:y(454)};
+
+  ctx.save();
+  if(selectedLens.tint === "beauty"){
+    const glow = ctx.createRadialGradient(x(1),y(1),faceWidth*.08,x(1),y(1),faceWidth*.7);
+    glow.addColorStop(0,"rgba(255,190,220,.17)");
+    glow.addColorStop(1,"rgba(255,190,220,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(x(234),y(10),faceWidth,faceWidth*1.4);
+  }
+  if(selectedLens.tint === "hearts"){
+    drawEmoji(leftCheek.x,leftCheek.y,faceWidth*.22,selectedLens.emoji);
+    drawEmoji(rightCheek.x,rightCheek.y,faceWidth*.22,selectedLens.second);
+  }else{
+    drawEmoji(leftEye.x,leftEye.y-faceWidth*.12,faceWidth*.22,selectedLens.emoji);
+    drawEmoji(rightEye.x,rightEye.y-faceWidth*.12,faceWidth*.22,selectedLens.second);
+  }
+  drawEmoji(forehead.x,forehead.y-faceWidth*.22,faceWidth*.25,selectedLens.emoji);
+  ctx.restore();
+}
+
+function showCategory(groupName){
+  const items = allLenses.filter(lens => lens.group === groupName);
+  lensBox.innerHTML = "";
+  items.forEach(lens=>{
+    const button = document.createElement("button");
+    button.textContent = lens.name;
+    button.dataset.id = String(lens.id);
+    button.classList.toggle("active",selectedLens?.id === lens.id);
+    lensBox.appendChild(button);
+  });
+}
+lensGroups.forEach((group,index)=>{
+  const button = document.createElement("button");
+  button.textContent = `${group.icon} ${group.name}`;
+  button.classList.toggle("active",index===0);
+  button.addEventListener("click",()=>{
+    categoryBox.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===button));
+    showCategory(group.name);
+  });
+  categoryBox.appendChild(button);
+});
+showCategory(lensGroups[0].name);
+
+lensBox.addEventListener("click",async event=>{
+  const button = event.target.closest("button[data-id]");
+  if(!button) return;
+  const lens = allLenses.find(item=>item.id === Number(button.dataset.id));
+  if(!lens) return;
+  selectedLens = lens;
+  lensBox.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===button));
+  latestFace = null;
+  await loadTracker();
+  if(landmarker) setStatus(`تم اختيار ${lens.name} — ضع وجهك أمام الكاميرا`);
+});
+
+document.getElementById("switch").addEventListener("click",()=>{
+  cameraSide = cameraSide === "user" ? "environment" : "user";
+  startCamera();
+});
+
+function makePhoto(){
+  const output = document.createElement("canvas");
+  output.width = video.videoWidth;
+  output.height = video.videoHeight;
+  const outCtx = output.getContext("2d");
+  outCtx.drawImage(video,0,0,output.width,output.height);
+  outCtx.drawImage(canvas,0,0,output.width,output.height);
+  return output;
+}
+document.getElementById("capture").addEventListener("click",()=>{
+  if(!video.videoWidth){ setStatus("انتظر حتى تعمل الكاميرا"); return; }
+  const photo = makePhoto();
+  photo.toBlob(blob=>{
+    if(!blob){setStatus("تعذر تجهيز الصورة");return;}
+    if(lastPhotoUrl) URL.revokeObjectURL(lastPhotoUrl);
+    lastPhotoUrl = URL.createObjectURL(blob);
+    setStatus("تم التقاط الصورة بجودة عالية. اضغط حفظ الصورة.");
+  },"image/jpeg",0.96);
+  window._lastPhotoCanvas = photo;
+});
+document.getElementById("save").addEventListener("click",()=>{
+  if(!window._lastPhotoCanvas){setStatus("التقط صورة أولاً");return;}
+  window._lastPhotoCanvas.toBlob(blob=>{
+    if(!blob){setStatus("تعذر حفظ الصورة");return;}
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Bashar-Snap-${Date.now()}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    setStatus("تم تجهيز الصورة للحفظ ❤️");
+  },"image/jpeg",0.96);
+});
+document.getElementById("choose").addEventListener("click",()=>{
+  document.getElementById("gallery").click();
+});
+document.getElementById("gallery").addEventListener("change",event=>{
+  const file = event.target.files?.[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload=()=>{
+    const output = document.createElement("canvas");
+    output.width = img.naturalWidth;
+    output.height = img.naturalHeight;
+    output.getContext("2d").drawImage(img,0,0);
+    window._lastPhotoCanvas = output;
+    URL.revokeObjectURL(url);
+    setStatus("تم اختيار الصورة. اضغط حفظ الصورة.");
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);setStatus("تعذر فتح الصورة");};
+  img.src=url;
+  event.target.value="";
+});
+
+await startCamera();
+if(!animationStarted){animationStarted=true;requestAnimationFrame(renderEffects);}
+</script>
+</body>
+</html>
